@@ -1,0 +1,354 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"PO-Revision-Date: 2020-08-13 08:53+0000\n"
+"Last-Translator: Twissen <selimcan.krgzl@gmail.com>\n"
+"Language-Team: Turkish\n"
+"Language: tr\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n > 1);\n"
+"X-Generator: Pontoon\n"
+
+msgctxt "Caption"
+msgid "[WixBundleName] Setup"
+msgstr "[WixBundleName] Kurulumu"
+
+msgctxt "Title"
+msgid "[WixBundleName]"
+msgstr "[WixBundleName]"
+
+msgctxt "CheckingForUpdatesLabel"
+msgid "Checking for updates"
+msgstr ""
+
+msgctxt "UpdateButton"
+msgid "&Update to version [WixStdBAUpdateAvailable]"
+msgstr ""
+
+msgctxt "InstallHeader"
+msgid "Welcome"
+msgstr "Hoş Geldiniz"
+
+#, fuzzy
+msgctxt "InstallMessage"
+msgid "Setup will install [WixBundleName] on your computer. Click Install to continue or Cancel to exit."
+msgstr "Kurulum bilgisayarınıza [WixBundleName]'yi yükleyecektir. Devam etmek için lütfen yükle butonuna tıklayınız."
+
+#, fuzzy
+msgctxt "InstallMessageOptions"
+msgid "Setup will install [WixBundleName] on your computer. Click Install to continue, Options to set installation options, or Cancel to exit."
+msgstr "Kurulum bilgisayarınıza [WixBundleName]'yi yükleyecektir. Devam etmek için lütfen yükle butonuna tıklayınız."
+
+msgctxt "InstallVersion"
+msgid "Version [WixBundleVersion]"
+msgstr "Versiyon [WixBundleVersion]"
+
+msgctxt "ConfirmCancelMessage"
+msgid "Are you sure you want to cancel?"
+msgstr "İptal etmek istediğinize emin misiniz?"
+
+msgctxt "ExecuteUpgradeRelatedBundleMessage"
+msgid "Previous version"
+msgstr "Önceki versiyon"
+
+msgctxt "HelpHeader"
+msgid "Setup Help"
+msgstr "Kurulum Yardımı"
+
+msgctxt "HelpText"
+msgid ""
+"/install | /repair | /uninstall | /layout [directory] - installs, repairs, uninstalls or\n"
+"   creates a complete local copy of the bundle in directory. Install is the default.\n"
+"\n"
+"/passive | /quiet -  displays minimal UI with no prompts or displays no UI and\n"
+"   no prompts. By default UI and all prompts are displayed.\n"
+"\n"
+"/norestart   - suppress any attempts to restart. By default UI will prompt before restart.\n"
+"/log log.txt - logs to a specific file. By default a log file is created in %TEMP%."
+msgstr ""
+"/install | /repair | /uninstall | /layout [dizin] - yükler, onarır, kaldırır veya¶\n"
+" · dizin içerisinde yığının tam, lokal bir kopyasını oluşturur. Yükleme varsayılandır.¶\n"
+"¶\n"
+"/passive | /quiet - · bilgi vermeksizin mini arayüz görüntülenir veya kullanıcı arayüzü görüntülenmez ve¶\n"
+" · bilgi vermez. Kullanıcı arayüzü ve tüm istemler varsayılan olarak görüntülenir.¶\n"
+"¶\n"
+"/norestart · - her türlü yeniden başlatma girişimlerini engeller. Varsayılan olarak, kullanıcı arayüzü yeniden başlatılmadan önce bilgi verecektir.¶\n"
+"/log kayıt.txt - belirli bir dosyaya girdi sağlar. Kayıt girdi dosyası varsayılan olarak %TEMP% içerisinde oluşturulur."
+
+msgctxt "HelpCloseButton"
+msgid "&Close"
+msgstr "&Kapat"
+
+msgctxt "InstallLicenseLinkText"
+msgid "[WixBundleName] <a href=\"#\">license terms</a>."
+msgstr "[WixBundleName] <a href=\"#\">lisans koşulları</a>."
+
+msgctxt "InstallAcceptCheckbox"
+msgid "I &agree to the license terms and conditions"
+msgstr "Lisans hüküm ve şartlarını &kabul ediyorum"
+
+msgctxt "InstallOptionsButton"
+msgid "&Options"
+msgstr "&Seçenekler"
+
+msgctxt "InstallInstallButton"
+msgid "&Install"
+msgstr "&Yükle"
+
+#, fuzzy
+msgctxt "InstallCancelButton"
+msgid "&Cancel"
+msgstr "&İptal"
+
+msgctxt "OptionsHeader"
+msgid "Setup Options"
+msgstr "Kurulum Seçenekleri"
+
+msgctxt "OptionsLocationLabel"
+msgid "Install location:"
+msgstr "Yükleme konumu:"
+
+msgctxt "OptionsBrowseButton"
+msgid "&Browse"
+msgstr "&Göz at"
+
+msgctxt "OptionsOkButton"
+msgid "&OK"
+msgstr "&Tamam"
+
+msgctxt "OptionsCancelButton"
+msgid "&Cancel"
+msgstr "&İptal"
+
+msgctxt "ProgressHeader"
+msgid "Setup Progress"
+msgstr "Kurulum İlerlemesi"
+
+msgctxt "ProgressLabel"
+msgid "Processing:"
+msgstr "İşleniyor:"
+
+msgctxt "OverallProgressPackageText"
+msgid "Initializing..."
+msgstr "Başlatılıyor..."
+
+msgctxt "ProgressCancelButton"
+msgid "&Cancel"
+msgstr "&İptal"
+
+msgctxt "ModifyHeader"
+msgid "Modify Setup"
+msgstr "Kurulumu özelleştirin"
+
+msgctxt "ModifyRepairButton"
+msgid "&Repair"
+msgstr "&Onar"
+
+msgctxt "ModifyUninstallButton"
+msgid "&Uninstall"
+msgstr "&Kaldır"
+
+#, fuzzy
+msgctxt "ModifyCancelButton"
+msgid "&Cancel"
+msgstr "&İptal"
+
+msgctxt "SuccessHeader"
+msgid "Setup Successful"
+msgstr "Kurulum işlemi başarılı"
+
+#, fuzzy
+msgctxt "SuccessCacheHeader"
+msgid "Cache Successfully Completed"
+msgstr "Onarım işlemi başarı ile tamamlandı"
+
+msgctxt "SuccessInstallHeader"
+msgid "Installation Successfully Completed"
+msgstr "Kurulum işlemi başarı ile tamamlandı"
+
+#, fuzzy
+msgctxt "SuccessLayoutHeader"
+msgid "Layout Successfully Completed"
+msgstr "Onarım işlemi başarı ile tamamlandı"
+
+#, fuzzy
+msgctxt "SuccessModifyHeader"
+msgid "Modify Successfully Completed"
+msgstr "Onarım işlemi başarı ile tamamlandı"
+
+msgctxt "SuccessRepairHeader"
+msgid "Repair Successfully Completed"
+msgstr "Onarım işlemi başarı ile tamamlandı"
+
+msgctxt "SuccessUninstallHeader"
+msgid "Uninstall Successfully Completed"
+msgstr "Kaldırma işlemi başarı ile tamamlandı"
+
+#, fuzzy
+msgctxt "SuccessUnsafeUninstallHeader"
+msgid "Uninstall Successfully Completed"
+msgstr "Kaldırma işlemi başarı ile tamamlandı"
+
+msgctxt "SuccessLaunchButton"
+msgid "&Launch"
+msgstr "&Başlat"
+
+msgctxt "SuccessRestartText"
+msgid "You must restart your computer before you can use the software."
+msgstr "Programı kullanmadan önce bilgisayarınızı yeniden başlatmalısınız."
+
+#, fuzzy
+msgctxt "SuccessUninstallRestartText"
+msgid "You must restart your computer to complete the removal of the software."
+msgstr "Yazılımın geri alınabilmesi için bilgisayarın yeniden başlatılması gerekir."
+
+msgctxt "SuccessRestartButton"
+msgid "&Restart"
+msgstr "&Yeniden Başlat"
+
+msgctxt "SuccessCloseButton"
+msgid "&Close"
+msgstr "&Kapat"
+
+msgctxt "FailureHeader"
+msgid "Setup Failed"
+msgstr "Kurulum işlemi başarısız oldu"
+
+#, fuzzy
+msgctxt "FailureCacheHeader"
+msgid "Cache Failed"
+msgstr "Kurulum işlemi başarısız oldu"
+
+msgctxt "FailureInstallHeader"
+msgid "Setup Failed"
+msgstr "Kurulum işlemi başarısız oldu"
+
+#, fuzzy
+msgctxt "FailureLayoutHeader"
+msgid "Layout Failed"
+msgstr "Kurulum işlemi başarısız oldu"
+
+#, fuzzy
+msgctxt "FailureModifyHeader"
+msgid "Modify Failed"
+msgstr "Kurulumu özelleştirin"
+
+msgctxt "FailureRepairHeader"
+msgid "Repair Failed"
+msgstr "Onarım işlemi başarısız oldu"
+
+msgctxt "FailureUninstallHeader"
+msgid "Uninstall Failed"
+msgstr "Kaldırma işlemi başarısız oldu"
+
+#, fuzzy
+msgctxt "FailureUnsafeUninstallHeader"
+msgid "Uninstall Failed"
+msgstr "Kaldırma işlemi başarısız oldu"
+
+msgctxt "FailureHyperlinkLogText"
+msgid "One or more issues caused the setup to fail. Please fix the issues and then retry setup. For more information see the <a href=\"#\">log file</a>."
+msgstr "Bir ya da birden fazla sorun kurulumun başarısız olmasına sebep oldu. Lütfen sorunları gideriniz ve tekrardan kurmayı deneyiniz. Daha fazla bilgi için <a href=\"#\">kayıt dosyası</a>."
+
+msgctxt "FailureRestartText"
+msgid "You must restart your computer to complete the rollback of the software."
+msgstr "Yazılımın geri alınabilmesi için bilgisayarın yeniden başlatılması gerekir."
+
+msgctxt "FailureRestartButton"
+msgid "&Restart"
+msgstr "&Yeniden Başlat"
+
+msgctxt "FailureCloseButton"
+msgid "&Close"
+msgstr "&Kapat"
+
+#, fuzzy
+msgctxt "FilesInUseTitle"
+msgid "Files In Use"
+msgstr "Dosyalar Kullanımda"
+
+msgctxt "FilesInUseLabel"
+msgid "The following applications are using files that need to be updated:"
+msgstr "Aşağıdaki uygulamalar güncellenmesi gereken dosyaları kullanıyor:"
+
+#, fuzzy
+msgctxt "FilesInUseNetfxCloseRadioButton"
+msgid "Close the &applications."
+msgstr "&Uygulamaları kapatın ve onları yeniden başlatmayı deneyin."
+
+msgctxt "FilesInUseCloseRadioButton"
+msgid "Close the &applications and attempt to restart them."
+msgstr "&Uygulamaları kapatın ve onları yeniden başlatmayı deneyin."
+
+msgctxt "FilesInUseDontCloseRadioButton"
+msgid "&Do not close applications. A reboot will be required."
+msgstr "&Uygulamaları kapatmayın. Bilgisayarınızı yeniden başlatmanız gerekecektir."
+
+msgctxt "FilesInUseRetryButton"
+msgid "&Retry"
+msgstr ""
+
+msgctxt "FilesInUseIgnoreButton"
+msgid "&Ignore"
+msgstr ""
+
+msgctxt "FilesInUseExitButton"
+msgid "E&xit"
+msgstr ""
+
+msgctxt "ErrorFailNoActionReboot"
+msgid "No action was taken as a system reboot is required."
+msgstr "Yeniden başlatmayı gerektirecek herhangi bir işlem yapılmadı."
+
+msgctxt "HlaeDisclaimerTitle"
+msgid "Disclaimer"
+msgstr "Sorumluluk Reddi"
+
+msgctxt "HlaeDisclaimer"
+msgid "This software is for your enjoyment and you are using it at your own risk."
+msgstr "Bu yazılım keyfi amaçlar için geliştirilmiştir. Yazılımın kullanımından doğacak sorumluluklar tarafınıza aittir."
+
+msgctxt "HlaeFfmpegTitle"
+msgid "FFMPEG"
+msgstr "FFMPEG"
+
+msgctxt "HlaeFfmpeg"
+msgid "FFMPEG can be used for encoding mirv_streams to videos."
+msgstr "FFMPEG mirv_streams'leri videoya dönüştürmek için kullanılabilir."
+
+msgctxt "HlaeSetupModifyInfo"
+msgid "To modify the existing HLAE installation, please use the \"HLAE\" entry in the installed applications list instead."
+msgstr "Lütfen HLAE kurulumunda yapmak istediğiniz değişiklikler için yüklü uygulamalar listesindeki \"HLAE\" girdisini kullanmayı tercih ediniz."
+
+msgctxt "HlaeRemoveAppData"
+msgid "Check to remove HLAE %APPDATA% folder upon uinstall (not recommended)."
+msgstr "Kaldırma sırasında HLAE'in %APPDATA% klasöründen de kaldırıldığından emin olun (tavsiye edilmez)."
+
+#~ msgctxt "InstallCloseButton"
+#~ msgid "&Close"
+#~ msgstr "&Kapat"
+
+#~ msgctxt "ModifyCloseButton"
+#~ msgid "&Close"
+#~ msgstr "&Kapat"
+
+#~ msgctxt "FilesInUseOkButton"
+#~ msgid "&OK"
+#~ msgstr "&Tamam"
+
+#~ msgctxt "FilesInUseCancelButton"
+#~ msgid "&Cancel"
+#~ msgstr "&İptal"
+
+#~ msgctxt "HlaeFeaturesHeader"
+#~ msgid "Features"
+#~ msgstr "Ek Özellikler"
+
+#~ msgctxt "HlaeFfmpegFeature"
+#~ msgid "Install FFMPEG from https://ffmpeg.zeranoe.com/builds/ (200 MB)"
+#~ msgstr ""
+#~ "FFMPEG'i şuradan yükle\n"
+#~ "https://ffmpeg.zeranoe.com/builds/ (200 MB)"

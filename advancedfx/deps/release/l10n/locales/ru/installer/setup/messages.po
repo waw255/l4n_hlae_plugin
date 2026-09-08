@@ -1,0 +1,353 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"PO-Revision-Date: 2020-07-11 20:44+0000\n"
+"Last-Translator: yovaN <akkardeon@gmail.com>\n"
+"Language-Team: Russian\n"
+"Language: ru\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
+"X-Generator: Pontoon\n"
+
+msgctxt "Caption"
+msgid "[WixBundleName] Setup"
+msgstr "Установка [WixBundleName]"
+
+msgctxt "Title"
+msgid "[WixBundleName]"
+msgstr "[WixBundleName]"
+
+msgctxt "CheckingForUpdatesLabel"
+msgid "Checking for updates"
+msgstr ""
+
+msgctxt "UpdateButton"
+msgid "&Update to version [WixStdBAUpdateAvailable]"
+msgstr ""
+
+msgctxt "InstallHeader"
+msgid "Welcome"
+msgstr "Добро пожаловать"
+
+#, fuzzy
+msgctxt "InstallMessage"
+msgid "Setup will install [WixBundleName] on your computer. Click Install to continue or Cancel to exit."
+msgstr "Эта программа установит [WixBundleName] на ваш компьютер. Нажмите Установить, чтобы продолжить"
+
+#, fuzzy
+msgctxt "InstallMessageOptions"
+msgid "Setup will install [WixBundleName] on your computer. Click Install to continue, Options to set installation options, or Cancel to exit."
+msgstr "Эта программа установит [WixBundleName] на ваш компьютер. Нажмите Установить, чтобы продолжить"
+
+msgctxt "InstallVersion"
+msgid "Version [WixBundleVersion]"
+msgstr "Версия [WixBundleVersion]"
+
+msgctxt "ConfirmCancelMessage"
+msgid "Are you sure you want to cancel?"
+msgstr "Вы действительно хотите отменить установку?"
+
+msgctxt "ExecuteUpgradeRelatedBundleMessage"
+msgid "Previous version"
+msgstr "Предыдущая версия"
+
+msgctxt "HelpHeader"
+msgid "Setup Help"
+msgstr "Справка по установке"
+
+msgctxt "HelpText"
+msgid ""
+"/install | /repair | /uninstall | /layout [directory] - installs, repairs, uninstalls or\n"
+"   creates a complete local copy of the bundle in directory. Install is the default.\n"
+"\n"
+"/passive | /quiet -  displays minimal UI with no prompts or displays no UI and\n"
+"   no prompts. By default UI and all prompts are displayed.\n"
+"\n"
+"/norestart   - suppress any attempts to restart. By default UI will prompt before restart.\n"
+"/log log.txt - logs to a specific file. By default a log file is created in %TEMP%."
+msgstr ""
+"/install | /repair | /uninstall | /layout [каталог] - устанавливает, исправляет, удаляет или \n"
+"   создает полную локальную копию программы в каталог. Установка по умолчанию\n"
+"\n"
+"/passive | /quiet -  отображает минимум окон без подсказок или не отображает окна и\n"
+"   подсказки. По умолчанию окна установки и все подсказки отображаются.\n"
+"\n"
+"/norestart   - предотвращает все попытки перезагрузки. По умолчанию\n"
+"   программа установки предупредит перед перезагрузкой.\n"
+"/log log.txt - создает лог файл. По умолчанию логи создаются в папке %TEMP%."
+
+msgctxt "HelpCloseButton"
+msgid "&Close"
+msgstr "&Закрыть"
+
+msgctxt "InstallLicenseLinkText"
+msgid "[WixBundleName] <a href=\"#\">license terms</a>."
+msgstr "[WixBundleName] <a href=\"#\">лицензионное соглашение</a>."
+
+msgctxt "InstallAcceptCheckbox"
+msgid "I &agree to the license terms and conditions"
+msgstr "Я &согласен с условиями лицензии"
+
+msgctxt "InstallOptionsButton"
+msgid "&Options"
+msgstr "&Опции"
+
+msgctxt "InstallInstallButton"
+msgid "&Install"
+msgstr "&Установить"
+
+#, fuzzy
+msgctxt "InstallCancelButton"
+msgid "&Cancel"
+msgstr "&Отмена"
+
+msgctxt "OptionsHeader"
+msgid "Setup Options"
+msgstr "Настройки установки"
+
+msgctxt "OptionsLocationLabel"
+msgid "Install location:"
+msgstr "Папка установки:"
+
+msgctxt "OptionsBrowseButton"
+msgid "&Browse"
+msgstr "&Обзор"
+
+msgctxt "OptionsOkButton"
+msgid "&OK"
+msgstr "&ОК"
+
+msgctxt "OptionsCancelButton"
+msgid "&Cancel"
+msgstr "&Отмена"
+
+msgctxt "ProgressHeader"
+msgid "Setup Progress"
+msgstr "Процесс установки"
+
+msgctxt "ProgressLabel"
+msgid "Processing:"
+msgstr "Обработка:"
+
+msgctxt "OverallProgressPackageText"
+msgid "Initializing..."
+msgstr "Идет инициализация..."
+
+msgctxt "ProgressCancelButton"
+msgid "&Cancel"
+msgstr "&Отмена"
+
+msgctxt "ModifyHeader"
+msgid "Modify Setup"
+msgstr "Изменить установку"
+
+msgctxt "ModifyRepairButton"
+msgid "&Repair"
+msgstr "&Исправить"
+
+msgctxt "ModifyUninstallButton"
+msgid "&Uninstall"
+msgstr "&Удалить"
+
+#, fuzzy
+msgctxt "ModifyCancelButton"
+msgid "&Cancel"
+msgstr "&Отмена"
+
+msgctxt "SuccessHeader"
+msgid "Setup Successful"
+msgstr "Установка завершена"
+
+#, fuzzy
+msgctxt "SuccessCacheHeader"
+msgid "Cache Successfully Completed"
+msgstr "Исправление успешно завершено"
+
+msgctxt "SuccessInstallHeader"
+msgid "Installation Successfully Completed"
+msgstr "Установка успешно завершена"
+
+#, fuzzy
+msgctxt "SuccessLayoutHeader"
+msgid "Layout Successfully Completed"
+msgstr "Исправление успешно завершено"
+
+#, fuzzy
+msgctxt "SuccessModifyHeader"
+msgid "Modify Successfully Completed"
+msgstr "Исправление успешно завершено"
+
+msgctxt "SuccessRepairHeader"
+msgid "Repair Successfully Completed"
+msgstr "Исправление успешно завершено"
+
+msgctxt "SuccessUninstallHeader"
+msgid "Uninstall Successfully Completed"
+msgstr "Удаление успешно завершено"
+
+#, fuzzy
+msgctxt "SuccessUnsafeUninstallHeader"
+msgid "Uninstall Successfully Completed"
+msgstr "Удаление успешно завершено"
+
+msgctxt "SuccessLaunchButton"
+msgid "&Launch"
+msgstr "&Запуск"
+
+msgctxt "SuccessRestartText"
+msgid "You must restart your computer before you can use the software."
+msgstr "Вы должны перезагрузить компьютер, прежде чем использовать программу."
+
+#, fuzzy
+msgctxt "SuccessUninstallRestartText"
+msgid "You must restart your computer to complete the removal of the software."
+msgstr "Вы должны перезагрузить компьютер, чтобы завершить откат программы."
+
+msgctxt "SuccessRestartButton"
+msgid "&Restart"
+msgstr "&Перезагрузка"
+
+msgctxt "SuccessCloseButton"
+msgid "&Close"
+msgstr "&Закрыть"
+
+msgctxt "FailureHeader"
+msgid "Setup Failed"
+msgstr "Ошибка установки"
+
+#, fuzzy
+msgctxt "FailureCacheHeader"
+msgid "Cache Failed"
+msgstr "Ошибка установки"
+
+msgctxt "FailureInstallHeader"
+msgid "Setup Failed"
+msgstr "Ошибка установки"
+
+#, fuzzy
+msgctxt "FailureLayoutHeader"
+msgid "Layout Failed"
+msgstr "Ошибка установки"
+
+#, fuzzy
+msgctxt "FailureModifyHeader"
+msgid "Modify Failed"
+msgstr "Изменить установку"
+
+msgctxt "FailureRepairHeader"
+msgid "Repair Failed"
+msgstr "Ошибка исправления"
+
+msgctxt "FailureUninstallHeader"
+msgid "Uninstall Failed"
+msgstr "Ошибка удаления"
+
+#, fuzzy
+msgctxt "FailureUnsafeUninstallHeader"
+msgid "Uninstall Failed"
+msgstr "Ошибка удаления"
+
+msgctxt "FailureHyperlinkLogText"
+msgid "One or more issues caused the setup to fail. Please fix the issues and then retry setup. For more information see the <a href=\"#\">log file</a>."
+msgstr "Одна или несколько проблем привели к сбою установки. Пожалуйста, устраните проблемы и повторите попытку установки. Для большей информации смотрите <a href=\"#\">журнал установки</a>."
+
+msgctxt "FailureRestartText"
+msgid "You must restart your computer to complete the rollback of the software."
+msgstr "Вы должны перезагрузить компьютер, чтобы завершить откат программы."
+
+msgctxt "FailureRestartButton"
+msgid "&Restart"
+msgstr "&Перезагрузка"
+
+msgctxt "FailureCloseButton"
+msgid "&Close"
+msgstr "&Закрыть"
+
+#, fuzzy
+msgctxt "FilesInUseTitle"
+msgid "Files In Use"
+msgstr "Используемые файлы"
+
+msgctxt "FilesInUseLabel"
+msgid "The following applications are using files that need to be updated:"
+msgstr "Следующие приложения используют файлы, которые необходимо обновить:"
+
+#, fuzzy
+msgctxt "FilesInUseNetfxCloseRadioButton"
+msgid "Close the &applications."
+msgstr "Закройте &приложения и попытайтесь перезапустить их."
+
+msgctxt "FilesInUseCloseRadioButton"
+msgid "Close the &applications and attempt to restart them."
+msgstr "Закройте &приложения и попытайтесь перезапустить их."
+
+msgctxt "FilesInUseDontCloseRadioButton"
+msgid "&Do not close applications. A reboot will be required."
+msgstr "&Не закрывайте приложения. Требуется перезагрузка."
+
+msgctxt "FilesInUseRetryButton"
+msgid "&Retry"
+msgstr ""
+
+msgctxt "FilesInUseIgnoreButton"
+msgid "&Ignore"
+msgstr ""
+
+msgctxt "FilesInUseExitButton"
+msgid "E&xit"
+msgstr ""
+
+msgctxt "ErrorFailNoActionReboot"
+msgid "No action was taken as a system reboot is required."
+msgstr "Никаких действий не предпринималось, поскольку требуется перезагрузка системы."
+
+msgctxt "HlaeDisclaimerTitle"
+msgid "Disclaimer"
+msgstr "Отказ от ответственности"
+
+msgctxt "HlaeDisclaimer"
+msgid "This software is for your enjoyment and you are using it at your own risk."
+msgstr "Эта программа предназначена для вашего удовольствия, и вы используете ее на свой страх и риск."
+
+msgctxt "HlaeFfmpegTitle"
+msgid "FFMPEG"
+msgstr "FFMPEG"
+
+msgctxt "HlaeFfmpeg"
+msgid "FFMPEG can be used for encoding mirv_streams to videos."
+msgstr "FFMPEG может быть использован для перекодировки mirv_streams в видео."
+
+msgctxt "HlaeSetupModifyInfo"
+msgid "To modify the existing HLAE installation, please use the \"HLAE\" entry in the installed applications list instead."
+msgstr "Чтобы изменить существующую установку HLAE, пожалуйста используйте \"Параметры > Приложения и возможности > HLAE\"."
+
+msgctxt "HlaeRemoveAppData"
+msgid "Check to remove HLAE %APPDATA% folder upon uinstall (not recommended)."
+msgstr "Отметьте для удаления папки HLAE из %APPDATA% при деинсталяции (не рекомендуется)."
+
+#~ msgctxt "InstallCloseButton"
+#~ msgid "&Close"
+#~ msgstr "&Закрыть"
+
+#~ msgctxt "ModifyCloseButton"
+#~ msgid "&Close"
+#~ msgstr "&Закрыть"
+
+#~ msgctxt "FilesInUseOkButton"
+#~ msgid "&OK"
+#~ msgstr "&ОК"
+
+#~ msgctxt "FilesInUseCancelButton"
+#~ msgid "&Cancel"
+#~ msgstr "&Отмена"
+
+#~ msgctxt "HlaeFeaturesHeader"
+#~ msgid "Features"
+#~ msgstr "Компоненты"
+
+#~ msgctxt "HlaeFfmpegFeature"
+#~ msgid "Install FFMPEG from https://ffmpeg.zeranoe.com/builds/ (200 MB)"
+#~ msgstr "Установить FFMPEG из https://ffmpeg.zeranoe.com/builds/ (200 MB)"

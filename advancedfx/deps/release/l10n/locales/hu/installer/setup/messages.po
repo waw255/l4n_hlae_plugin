@@ -1,0 +1,344 @@
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"PO-Revision-Date: 2020-01-26 00:20+0000\n"
+"Last-Translator: fiskal.rafael <fiskal.rafael@gmail.com>\n"
+"Language-Team: Hungarian\n"
+"Language: hu\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Pontoon\n"
+
+msgctxt "Caption"
+msgid "[WixBundleName] Setup"
+msgstr "[WixBundleName] Telepítő"
+
+msgctxt "Title"
+msgid "[WixBundleName]"
+msgstr "[WixBundleName]"
+
+msgctxt "CheckingForUpdatesLabel"
+msgid "Checking for updates"
+msgstr ""
+
+msgctxt "UpdateButton"
+msgid "&Update to version [WixStdBAUpdateAvailable]"
+msgstr ""
+
+msgctxt "InstallHeader"
+msgid "Welcome"
+msgstr "Légy üdvözölve"
+
+#, fuzzy
+msgctxt "InstallMessage"
+msgid "Setup will install [WixBundleName] on your computer. Click Install to continue or Cancel to exit."
+msgstr "A [WixBundleName] lesz telepítve a számítógépedre. A folytatáshoz kattints a Telepítésre"
+
+#, fuzzy
+msgctxt "InstallMessageOptions"
+msgid "Setup will install [WixBundleName] on your computer. Click Install to continue, Options to set installation options, or Cancel to exit."
+msgstr "A [WixBundleName] lesz telepítve a számítógépedre. A folytatáshoz kattints a Telepítésre"
+
+msgctxt "InstallVersion"
+msgid "Version [WixBundleVersion]"
+msgstr "Verzió [WixBundleVersion]"
+
+msgctxt "ConfirmCancelMessage"
+msgid "Are you sure you want to cancel?"
+msgstr "Biztosan kilépsz?"
+
+msgctxt "ExecuteUpgradeRelatedBundleMessage"
+msgid "Previous version"
+msgstr "Előző verzió"
+
+msgctxt "HelpHeader"
+msgid "Setup Help"
+msgstr "Telepítő-segéd"
+
+msgctxt "HelpText"
+msgid ""
+"/install | /repair | /uninstall | /layout [directory] - installs, repairs, uninstalls or\n"
+"   creates a complete local copy of the bundle in directory. Install is the default.\n"
+"\n"
+"/passive | /quiet -  displays minimal UI with no prompts or displays no UI and\n"
+"   no prompts. By default UI and all prompts are displayed.\n"
+"\n"
+"/norestart   - suppress any attempts to restart. By default UI will prompt before restart.\n"
+"/log log.txt - logs to a specific file. By default a log file is created in %TEMP%."
+msgstr ""
+
+msgctxt "HelpCloseButton"
+msgid "&Close"
+msgstr "&Bezárás"
+
+msgctxt "InstallLicenseLinkText"
+msgid "[WixBundleName] <a href=\"#\">license terms</a>."
+msgstr "[WixBundleName] <a href=\"#\">szerződési feltételek</a>."
+
+msgctxt "InstallAcceptCheckbox"
+msgid "I &agree to the license terms and conditions"
+msgstr "&Elfogadom az ÁSZF-et"
+
+msgctxt "InstallOptionsButton"
+msgid "&Options"
+msgstr "&Beállítások"
+
+msgctxt "InstallInstallButton"
+msgid "&Install"
+msgstr "&Telepítés"
+
+#, fuzzy
+msgctxt "InstallCancelButton"
+msgid "&Cancel"
+msgstr "&Vissza"
+
+msgctxt "OptionsHeader"
+msgid "Setup Options"
+msgstr "Telepítő Beállítása"
+
+msgctxt "OptionsLocationLabel"
+msgid "Install location:"
+msgstr "Telepítés helye:"
+
+msgctxt "OptionsBrowseButton"
+msgid "&Browse"
+msgstr "&Tallózás"
+
+msgctxt "OptionsOkButton"
+msgid "&OK"
+msgstr "&OK"
+
+msgctxt "OptionsCancelButton"
+msgid "&Cancel"
+msgstr "&Vissza"
+
+msgctxt "ProgressHeader"
+msgid "Setup Progress"
+msgstr "Telepítés Állapota"
+
+msgctxt "ProgressLabel"
+msgid "Processing:"
+msgstr "Feldolgozás alatt:"
+
+msgctxt "OverallProgressPackageText"
+msgid "Initializing..."
+msgstr "Előkészítés..."
+
+msgctxt "ProgressCancelButton"
+msgid "&Cancel"
+msgstr "&Mégse"
+
+msgctxt "ModifyHeader"
+msgid "Modify Setup"
+msgstr "Telepítés Módosítása"
+
+msgctxt "ModifyRepairButton"
+msgid "&Repair"
+msgstr "&Javítás"
+
+msgctxt "ModifyUninstallButton"
+msgid "&Uninstall"
+msgstr "&Eltávolítás"
+
+#, fuzzy
+msgctxt "ModifyCancelButton"
+msgid "&Cancel"
+msgstr "&Vissza"
+
+msgctxt "SuccessHeader"
+msgid "Setup Successful"
+msgstr "Telepítés Sikeres"
+
+#, fuzzy
+msgctxt "SuccessCacheHeader"
+msgid "Cache Successfully Completed"
+msgstr "Javítás Sikeresen Befejeződött"
+
+msgctxt "SuccessInstallHeader"
+msgid "Installation Successfully Completed"
+msgstr "Telepítés Sikeresen Befejeződött"
+
+#, fuzzy
+msgctxt "SuccessLayoutHeader"
+msgid "Layout Successfully Completed"
+msgstr "Javítás Sikeresen Befejeződött"
+
+#, fuzzy
+msgctxt "SuccessModifyHeader"
+msgid "Modify Successfully Completed"
+msgstr "Javítás Sikeresen Befejeződött"
+
+msgctxt "SuccessRepairHeader"
+msgid "Repair Successfully Completed"
+msgstr "Javítás Sikeresen Befejeződött"
+
+msgctxt "SuccessUninstallHeader"
+msgid "Uninstall Successfully Completed"
+msgstr "Eltávolítás Sikeresen Befejeződött"
+
+#, fuzzy
+msgctxt "SuccessUnsafeUninstallHeader"
+msgid "Uninstall Successfully Completed"
+msgstr "Eltávolítás Sikeresen Befejeződött"
+
+msgctxt "SuccessLaunchButton"
+msgid "&Launch"
+msgstr "&Indítás"
+
+msgctxt "SuccessRestartText"
+msgid "You must restart your computer before you can use the software."
+msgstr "A program használatához újra kell indítanod a számítógépet."
+
+#, fuzzy
+msgctxt "SuccessUninstallRestartText"
+msgid "You must restart your computer to complete the removal of the software."
+msgstr "A visszaállítás befejezéséhez újra kell indítanod a számítógépet."
+
+msgctxt "SuccessRestartButton"
+msgid "&Restart"
+msgstr "&Újraindít"
+
+msgctxt "SuccessCloseButton"
+msgid "&Close"
+msgstr "&Bezár"
+
+msgctxt "FailureHeader"
+msgid "Setup Failed"
+msgstr "Telepítés Sikertelen"
+
+#, fuzzy
+msgctxt "FailureCacheHeader"
+msgid "Cache Failed"
+msgstr "Telepítés Sikertelen"
+
+msgctxt "FailureInstallHeader"
+msgid "Setup Failed"
+msgstr "Telepítés Sikertelen"
+
+#, fuzzy
+msgctxt "FailureLayoutHeader"
+msgid "Layout Failed"
+msgstr "Telepítés Sikertelen"
+
+#, fuzzy
+msgctxt "FailureModifyHeader"
+msgid "Modify Failed"
+msgstr "Telepítés Módosítása"
+
+msgctxt "FailureRepairHeader"
+msgid "Repair Failed"
+msgstr "Javítás nem sikerült"
+
+msgctxt "FailureUninstallHeader"
+msgid "Uninstall Failed"
+msgstr "Eltávolítás Sikertelen"
+
+#, fuzzy
+msgctxt "FailureUnsafeUninstallHeader"
+msgid "Uninstall Failed"
+msgstr "Eltávolítás Sikertelen"
+
+msgctxt "FailureHyperlinkLogText"
+msgid "One or more issues caused the setup to fail. Please fix the issues and then retry setup. For more information see the <a href=\"#\">log file</a>."
+msgstr ""
+
+msgctxt "FailureRestartText"
+msgid "You must restart your computer to complete the rollback of the software."
+msgstr "A visszaállítás befejezéséhez újra kell indítanod a számítógépet."
+
+msgctxt "FailureRestartButton"
+msgid "&Restart"
+msgstr "&Újraindít"
+
+msgctxt "FailureCloseButton"
+msgid "&Close"
+msgstr "&Bezár"
+
+#, fuzzy
+msgctxt "FilesInUseTitle"
+msgid "Files In Use"
+msgstr "Használatban Lévő Fájlok"
+
+msgctxt "FilesInUseLabel"
+msgid "The following applications are using files that need to be updated:"
+msgstr "A következő alkalmazások frissítésre szoruló fájlokat használnak:"
+
+#, fuzzy
+msgctxt "FilesInUseNetfxCloseRadioButton"
+msgid "Close the &applications."
+msgstr "Zárd be az &alkalmazásokat és próbáld meg újraindítani őket."
+
+msgctxt "FilesInUseCloseRadioButton"
+msgid "Close the &applications and attempt to restart them."
+msgstr "Zárd be az &alkalmazásokat és próbáld meg újraindítani őket."
+
+msgctxt "FilesInUseDontCloseRadioButton"
+msgid "&Do not close applications. A reboot will be required."
+msgstr "&Ne zárj be alkalmazásokat. Újra kell indítani a rendszert."
+
+msgctxt "FilesInUseRetryButton"
+msgid "&Retry"
+msgstr ""
+
+msgctxt "FilesInUseIgnoreButton"
+msgid "&Ignore"
+msgstr ""
+
+msgctxt "FilesInUseExitButton"
+msgid "E&xit"
+msgstr ""
+
+msgctxt "ErrorFailNoActionReboot"
+msgid "No action was taken as a system reboot is required."
+msgstr "Végrehajtás megszakítva, mert a rendszer újraindítására van szükség."
+
+msgctxt "HlaeDisclaimerTitle"
+msgid "Disclaimer"
+msgstr "Nyilatkozat"
+
+msgctxt "HlaeDisclaimer"
+msgid "This software is for your enjoyment and you are using it at your own risk."
+msgstr "Ez a szoftver a szórakozásodat szolgálja és a saját felelősségedre használod."
+
+msgctxt "HlaeFfmpegTitle"
+msgid "FFMPEG"
+msgstr "FFMPEG"
+
+msgctxt "HlaeFfmpeg"
+msgid "FFMPEG can be used for encoding mirv_streams to videos."
+msgstr ""
+
+msgctxt "HlaeSetupModifyInfo"
+msgid "To modify the existing HLAE installation, please use the \"HLAE\" entry in the installed applications list instead."
+msgstr ""
+
+msgctxt "HlaeRemoveAppData"
+msgid "Check to remove HLAE %APPDATA% folder upon uinstall (not recommended)."
+msgstr ""
+
+#~ msgctxt "InstallCloseButton"
+#~ msgid "&Close"
+#~ msgstr "&Kilépés"
+
+#~ msgctxt "ModifyCloseButton"
+#~ msgid "&Close"
+#~ msgstr "&Bezárás"
+
+#~ msgctxt "FilesInUseOkButton"
+#~ msgid "&OK"
+#~ msgstr "&OK"
+
+#~ msgctxt "FilesInUseCancelButton"
+#~ msgid "&Cancel"
+#~ msgstr "&Mégse"
+
+#~ msgctxt "HlaeFeaturesHeader"
+#~ msgid "Features"
+#~ msgstr "Szolgáltatások"
+
+#~ msgctxt "HlaeFfmpegFeature"
+#~ msgid "Install FFMPEG from https://ffmpeg.zeranoe.com/builds/ (200 MB)"
+#~ msgstr "FFMPEG telepítése innen: https://ffmpeg.zeranoe.com/builds/ (200 MB)"

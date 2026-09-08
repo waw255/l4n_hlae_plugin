@@ -1,0 +1,2336 @@
+#include "stdafx.h"
+
+#include "addresses.h"
+#include "CampathDrawer.h"
+#include "ClientEntitySystem.h"
+#include "GameEvents.h"
+#include "hlaeFolder.h"
+#include "RenderServiceHooks.h"
+#include "RenderSystemDX11Hooks.h"
+#include "WrpConsole.h"
+#include "AfxHookSource2Rs.h"
+#include "ReShadeAdvancedfx.h"
+#include "CamIO.h"
+#include "ViewModel.h"
+#include "Globals.h"
+#include "DeathMsg.h"
+#include "ReplaceName.h"
+#include "SchemaSystem.h"
+#include "SceneSystem.h"
+#include "MirvCommands.h"
+#include "MirvColors.h"
+#include "MirvFix.h"
+#include "MirvTime.h"
+
+#include "../deps/release/prop/AfxHookSource/SourceSdkShared.h"
+#include "../deps/release/prop/AfxHookSource/SourceInterfaces.h"
+#include "../deps/release/prop/cs2/Source2Client.h"
+#include "../deps/release/prop/cs2/sdk_src/public/tier1/convar.h"
+#include "../deps/release/prop/cs2/sdk_src/public/filesystem.h"
+#include "../deps/release/prop/cs2/sdk_src/public/cdll_int.h"
+#include "../deps/release/prop/cs2/sdk_src/public/icvar.h"
+#include "../deps/release/prop/cs2/sdk_src/public/igameuiservice.h"
+
+#include "../shared/AfxCommandLine.h"
+#include "../shared/AfxConsole.h"
+#include "../shared/AfxDetours.h"
+#include "../shared/ConsolePrinter.h"
+#include "../shared/StringTools.h"
+#include "../shared/binutils.h"
+#include "../shared/CommandSystem.h"
+#include "../shared/GrowingBufferPoolThreadSafe.h"
+#include "../shared/ThreadPool.h"
+#include "../shared/MirvCamIO.h"
+#include "../shared/MirvCampath.h"
+#include "../shared/MirvInput.h"
+#include "../shared/MirvSkip.h"
+
+#include "../deps/release/Detours/src/detours.h"
+
+#define _USE_MATH_DEFINES
+#include <math.h>
+
+#include <stdlib.h>
+#include <sstream>
+#include <mutex>
+
+HMODULE g_h_engine2Dll = 0;
+HMODULE g_H_ClientDll = 0;
+HMODULE g_H_SchemaSystem = 0;
+HMODULE g_H_ResourceSystemDll = 0;
+HMODULE g_H_FileSystem_stdio = 0;
+
+SOURCESDK::CS2::IFileSystem* g_pFileSystem = nullptr;
+
+advancedfx::CCommandLine  * g_CommandLine = nullptr;
+
+typedef void (__fastcall * AddSearchPath_t)(void* This, const char *pPath, const char *pathID, int addType, int priority, int unk );
+AddSearchPath_t org_AddSearchPath = nullptr;
+
+void new_AddSearchPath(void* This, const char *pPath, const char *pathID, int addType, int priority, int unk) {
+	if (0 == strcmp(pathID, "USRLOCAL")) {
+		const wchar_t* USRLOCALCSGO = _wgetenv(L"USRLOCALCSGO");
+		if (nullptr != USRLOCALCSGO) {
+			std::string USRLOCALCSGO_copy = "";
+			WideStringToUTF8String(USRLOCALCSGO, USRLOCALCSGO_copy);
+			if (USRLOCALCSGO_copy.size() > 0) {
+				return org_AddSearchPath(This, USRLOCALCSGO_copy.c_str(), pathID, addType, priority, unk);
+			} 
+		}
+	}
+
+	return org_AddSearchPath(This, pPath, pathID, addType, priority, unk);
+}
+
+FovScaling GetDefaultFovScaling() {
+	return FovScaling_AlienSwarm;
+}
+
+void PrintInfo() {
+	advancedfx::Message(
+		"|" "\n"
+		"| AfxHookSource2 (" __DATE__ " " __TIME__ ")" "\n"
+		"| https://advancedfx.org/" "\n"
+		"|" "\n"
+	);
+}
+
+void * g_pGameResourceService = nullptr;
+
+/*typedef void (*Unknown_ExecuteClientCommandFromNetChan_t)(void * Ecx, void * Edx, void *R8);
+Unknown_ExecuteClientCommandFromNetChan_t g_Old_Unknown_ExecuteClientCommandFromNetChan = nullptr;
+void New_Unknown_ExecuteClientCommandFromNetChan(void * Ecx, void * Edx, SOURCESDK::CS2::CCommand *r8Command) {
+	//for(int i = 0; i < r8Command->ArgC(); i++) {
+	//	advancedfx::Message("Command %i: %s\n",i,r8Command->Arg(i));
+	//}
+	if(0 == stricmp("connect",r8Command->Arg(0))) {
+		if(IDYES != MessageBoxA(0,"YOU ARE TRYING TO CONNECT TO A SERVER - THIS WILL GET YOU VAC BANNED.\nARE YOU SURE?", "HLAE WARNING", MB_YESNOCANCEL|MB_ICONHAND|MB_DEFBUTTON2))
+			return;
+	}
+	g_Old_Unknown_ExecuteClientCommandFromNetChan(Ecx, Edx, r8Command);
+}*/
+
+
+void HookEngineDll(HMODULE engineDll) {
+
+	static bool bFirstCall = true;
+	if(!bFirstCall) return;
+	bFirstCall = false;
+	
+	// Unknown_ExecuteClientCommandFromNetChan: // Last checked 2023-07-19
+	/*
+		The function we hook is called in the function referencing the string
+		"Client %s(%d) tried to execute command \"%s\" before being fully connected.\n"
+		or the other function referencing "SV: Cheat command '%s' ignored.\n"
+		as follows:
+
+		loc_1801842F0:
+		mov     r8, rdi
+		lea     rdx, [rsp+0D68h+var_D38]
+		lea     rcx, [rsp+0D68h+arg_18]
+		call    sub_180329DD0 <---
+		lea     rcx, [rsp+0D68h+var_D30]
+		call    sub_180183A60	
+	*/
+	/*{
+		Afx::BinUtils::ImageSectionsReader sections((HMODULE)engineDll);
+		Afx::BinUtils::MemRange textRange = sections.GetMemRange();
+		Afx::BinUtils::MemRange result = FindPatternString(textRange, "4C 8B D1 48 8B 0D ?? ?? ?? ?? 48 85 C9 74 13 48 8B 01 4D 8B C8 4C 8B C2 49 8B 12 48 FF A0 90 00 00 00 C3");
+		if (!result.IsEmpty()) {
+			g_Old_Unknown_ExecuteClientCommandFromNetChan = (Unknown_ExecuteClientCommandFromNetChan_t)result.Start;	
+			DetourTransactionBegin();
+			DetourUpdateThread(GetCurrentThread());
+			DetourAttach(&(PVOID&)g_Old_Unknown_ExecuteClientCommandFromNetChan, New_Unknown_ExecuteClientCommandFromNetChan);
+			if(NO_ERROR != DetourTransactionCommit())
+				ErrorBox("Failed to detour Unknown_ExecuteClientCommandFromNetChan.");
+		}
+		else
+			ErrorBox(MkErrStr(__FILE__, __LINE__));
+	}*/
+}
+
+typedef void (__fastcall * HostStateRequest_Start_t)(void * This);
+HostStateRequest_Start_t g_Old_HostStateRequest_Start = nullptr;
+void __fastcall New_HostStateRequest_Start(void * This) {
+	if(4 == *(int *)This) {
+		// "HostStateRequest::Start(HSR_QUIT)\n"
+		AfxStreams_ShutDown();
+	}
+	g_Old_HostStateRequest_Start(This);
+}
+
+void Hook_Engine__HostStateRequest_Start() {
+	static bool bFirstRun = true;
+	if(bFirstRun) {
+		bFirstRun = false;
+		if(AFXADDR_GET(cs2_engine_HostStateRequest_Start)) {
+			g_Old_HostStateRequest_Start = (HostStateRequest_Start_t)AFXADDR_GET(cs2_engine_HostStateRequest_Start);
+			DetourTransactionBegin();
+			DetourUpdateThread(GetCurrentThread());
+			DetourAttach(&(PVOID&)g_Old_HostStateRequest_Start,New_HostStateRequest_Start);
+			if(NO_ERROR != DetourTransactionCommit()) ErrorBox(MkErrStr(__FILE__, __LINE__));
+		}
+	}
+}
+
+
+SOURCESDK::CS2::ISource2EngineToClient * g_pEngineToClient = nullptr;
+
+////////////////////////////////////////////////////////////////////////////////
+
+//TODO: Some bellow here might be not accurate yet.
+
+typedef void * Cs2Gloabls_t;
+Cs2Gloabls_t g_pGlobals = nullptr;
+
+DWORD g_SleepMs = 0;
+
+CON_COMMAND(__mirv_sleep,"") {
+if (2<= args->ArgC()) g_SleepMs = strtoul(args->ArgV(1),nullptr,10);
+}
+
+CON_COMMAND(__mirv_info,"") {
+	PrintInfo();
+}
+
+CON_COMMAND(__mirv_test,"") {
+	static int offset = 13;
+
+	if(2 <= args->ArgC()) offset = atoi(args->ArgV(1));
+
+	advancedfx::Message("g_pGlobals[%i]: int: %i , float: %f\n",offset,(g_pGlobals ? *(int *)((unsigned char *)g_pGlobals +offset*4) : 0),(g_pGlobals ? *(float *)((unsigned char *)g_pGlobals +offset*4) : 0));
+}
+
+extern const char * GetStringForSymbol(int value);
+
+CON_COMMAND(__mirv_get_string_for_symbol,"") {
+	if (2<= args->ArgC()) {
+		advancedfx::Message("%i: %s\n",atoi(args->ArgV(1)),GetStringForSymbol(atoi(args->ArgV(1))));
+	}
+}
+
+CON_COMMAND(__mirv_find_vtable,"") {
+	if(args->ArgC()<5) return;
+
+	HMODULE hModule = GetModuleHandleA(args->ArgV(1));
+	size_t addr = hModule != 0 ? Afx::BinUtils::FindClassVtable(hModule,args->ArgV(2),atoi(args->ArgV(3)),atoi(args->ArgV(4))) : 0;
+	DWORD offset = (DWORD)(addr-(size_t)hModule);
+	advancedfx::Message("Result: 0x%016llx (Offset: 0x%08x)\n",addr,offset);
+}
+
+/*CON_COMMAND(mirv_exec,"") {
+    std::ostringstream oss;
+
+	for(int i=1; i < args->ArgC(); i++) {
+		if(1 < i ) oss << " ";
+		std::string strArg(args->ArgV(i));
+
+		// Escape quotes:
+		for (size_t pos = strArg.find('\"', 0); std::string::npos != pos; pos = strArg.find('\"', pos + 2 ) ) strArg.replace(pos, 1, "\\\"");
+
+		oss << "\"" << strArg << "\"";
+	}
+
+    if(g_pEngineToClient) g_pEngineToClient->ExecuteClientCmd(0, oss.str().c_str(), false);	
+}*/
+
+CON_COMMAND(mirv_loadlibrary, "Load a DLL.")
+{
+	int argc = args->ArgC();
+
+	if (2 <= argc)
+	{
+		char const * cmd1 = args->ArgV(1);
+
+		std::wstring wCmd1;
+		if (UTF8StringToWideString(cmd1, wCmd1))
+		{
+
+			if (0 != LoadLibraryW(wCmd1.c_str()))
+			{
+				advancedfx::Message("LoadLibraryA OK.\n");
+			}
+			else
+			{
+				advancedfx::Message("LoadLibraryA failed.\n");
+			}
+		}
+		else
+		{
+			advancedfx::Message("Failed to convert \"%s\" from UFT8 to UTF-16.\n", cmd1);
+		}
+
+		return;
+	}
+
+	advancedfx::Message(
+		"mirv_loadlibrary <sDllFilePath> - Load DLL at given path.\n"
+	);
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+SOURCESDK::CS2::IGameUIService * g_pGameUIService = nullptr;
+
+class MirvInputEx : private IMirvInputDependencies
+{
+public:
+	MirvInputEx() {
+		LastWidth = 1920;
+		LastHeight = 1080;
+
+		LastCameraOrigin[0] = 0.0;
+		LastCameraOrigin[1] = 0.0;
+		LastCameraOrigin[2] = 0.0;
+		LastCameraAngles[0] = 0.0;
+		LastCameraAngles[1] = 0.0;
+		LastCameraAngles[2] = 0.0;
+		LastCameraFov = 90.0;
+
+		GameCameraOrigin[0] = 0.0;
+		GameCameraOrigin[1] = 0.0;
+		GameCameraOrigin[2] = 0.0;
+		GameCameraAngles[0] = 0.0;
+		GameCameraAngles[1] = 0.0;
+		GameCameraAngles[2] = 0.0;
+		GameCameraFov = 90.0;
+
+		LastFrameTime = 0;
+
+		m_MirvInput = new MirvInput(this);
+	}
+
+	~MirvInputEx() {
+		delete m_MirvInput;
+	}
+
+	MirvInput * m_MirvInput;
+
+	double LastCameraOrigin[3];
+	double LastCameraAngles[3];
+	double LastCameraFov;
+
+	double GameCameraOrigin[3];
+	double GameCameraAngles[3];
+	double GameCameraFov;
+
+	double LastFrameTime;
+
+	int LastWidth;
+	int LastHeight;
+
+private:
+	virtual bool GetSuspendMirvInput() override {
+		return g_pGameUIService && g_pGameUIService->Con_IsVisible();
+	}
+
+	virtual void GetLastCameraData(double & x, double & y, double & z, double & rX, double & rY, double & rZ, double & fov) override {
+		x = LastCameraOrigin[0];
+		y = LastCameraOrigin[1];
+		z = LastCameraOrigin[2];
+		rX = LastCameraAngles[0];
+		rY = LastCameraAngles[1];
+		rZ = LastCameraAngles[2];
+		fov = LastCameraFov;
+	}
+
+	virtual void GetGameCameraData(double & x, double & y, double & z, double & rX, double & rY, double & rZ, double & fov) override {
+		x = GameCameraOrigin[0];
+		y = GameCameraOrigin[1];
+		z = GameCameraOrigin[2];
+		rX = GameCameraAngles[0];
+		rY = GameCameraAngles[1];
+		rZ = GameCameraAngles[2];
+		fov = GameCameraFov;
+	}
+
+	virtual double GetInverseScaledFov(double fov) override {
+		return ScaleFovInverse(LastWidth, LastHeight, fov);
+	}
+
+private:
+
+	double ScaleFovInverse(double width, double height, double fov) {
+		if (!height) return fov;
+
+		double engineAspectRatio = width / height;
+		double defaultAscpectRatio = 4.0 / 3.0;
+		double ratio = engineAspectRatio / defaultAscpectRatio;
+		double t = tan(0.5 * fov * (2.0 * M_PI / 360.0));
+		double halfAngle = atan(t / ratio);
+		return 2.0 * halfAngle / (2.0 * M_PI / 360.0);
+	}
+
+} g_MirvInputEx;
+
+float GetLastCameraFov() {
+	return (float)g_MirvInputEx.LastCameraFov;
+}
+
+CON_COMMAND(mirv_input, "Input mode configuration.")
+{
+	g_MirvInputEx.m_MirvInput->ConCommand(args);
+}
+
+WNDPROC g_NextWindProc;
+static bool g_afxWindowProcSet = false;
+
+LRESULT CALLBACK new_Afx_WindowProc(
+	__in HWND hwnd,
+	__in UINT uMsg,
+	__in WPARAM wParam,
+	__in LPARAM lParam
+)
+{
+//	if (AfxHookSource::Gui::WndProcHandler(hwnd, uMsg, wParam, lParam))
+//		return 0;
+
+	switch(uMsg)
+	{
+	case WM_ACTIVATE:
+		g_MirvInputEx.m_MirvInput->Supply_Focus(LOWORD(wParam) != 0);
+		break;
+	case WM_CHAR:
+		if(g_MirvInputEx.m_MirvInput->Supply_CharEvent(wParam, lParam))
+			return 0;
+		break;
+	case WM_KEYDOWN:
+		if(g_MirvInputEx.m_MirvInput->Supply_KeyEvent(MirvInput::KS_DOWN, wParam, lParam))
+			return 0;
+		break;
+	case WM_KEYUP:
+		if(g_MirvInputEx.m_MirvInput->Supply_KeyEvent(MirvInput::KS_UP,wParam, lParam))
+			return 0;
+		break;
+	case WM_LBUTTONDBLCLK:
+	case WM_LBUTTONDOWN:
+	case WM_LBUTTONUP:
+	case WM_MBUTTONDBLCLK:
+	case WM_MBUTTONDOWN:
+	case WM_MBUTTONUP:
+	case WM_RBUTTONDBLCLK:
+	case WM_RBUTTONDOWN:
+	case WM_RBUTTONUP:
+	case WM_MOUSEMOVE:
+	case WM_MOUSEWHEEL:
+		if (g_MirvInputEx.m_MirvInput->Supply_MouseEvent(uMsg, wParam, lParam))
+			return 0;
+		break;
+	}
+	return CallWindowProcW(g_NextWindProc, hwnd, uMsg, wParam, lParam);
+}
+
+// TODO: this is risky, actually we should track the hWnd maybe.
+LONG_PTR WINAPI new_GetWindowLongPtrW(
+  __in HWND hWnd,
+  __in int  nIndex
+)
+{
+	if(nIndex == GWLP_WNDPROC)
+	{
+		if(g_afxWindowProcSet)
+		{
+			return (LONG_PTR)g_NextWindProc;
+		}
+	}
+
+	return GetWindowLongPtrW(hWnd, nIndex);
+}
+
+// TODO: this is risky, actually we should track the hWnd maybe.
+LONG_PTR WINAPI new_SetWindowLongPtrW(
+  __in HWND     hWnd,
+  __in int      nIndex,
+  __in LONG_PTR dwNewLong
+)
+{
+	if(nIndex == GWLP_WNDPROC)
+	{
+		LONG lResult = SetWindowLongPtrW(hWnd, nIndex, (LONG_PTR)new_Afx_WindowProc);
+
+		if(!g_afxWindowProcSet)
+		{
+			g_afxWindowProcSet = true;
+		}
+		else
+		{
+			lResult = (LONG_PTR)g_NextWindProc;
+		}
+
+		g_NextWindProc = (WNDPROC)dwNewLong;
+
+		return lResult;
+	}
+
+	return SetWindowLongPtrW(hWnd, nIndex, dwNewLong);
+}
+
+BOOL WINAPI new_GetCursorPos(
+	__out LPPOINT lpPoint
+)
+{
+	BOOL result = GetCursorPos(lpPoint);
+
+//	if (AfxHookSource::Gui::OnGetCursorPos(lpPoint))
+//		return TRUE;
+
+	g_MirvInputEx.m_MirvInput->Supply_GetCursorPos(lpPoint);
+
+	return result;
+}
+
+BOOL WINAPI new_SetCursorPos(
+	__in int X,
+	__in int Y
+)
+{
+//	if (AfxHookSource::Gui::OnSetCursorPos(X, Y))
+//		return TRUE;
+
+	BOOL result = SetCursorPos(X, Y);
+	if(result) g_MirvInputEx.m_MirvInput->Supply_SetCursorPos(X, Y);
+	return result;
+}
+
+HCURSOR WINAPI new_SetCursor(__in_opt HCURSOR hCursor)
+{
+//	HCURSOR result;
+
+//	if (AfxHookSource::Gui::OnSetCursor(hCursor, result))
+//		return result;
+
+	return SetCursor(hCursor);
+}
+
+HWND WINAPI new_SetCapture(__in HWND hWnd)
+{
+//	HWND result;
+
+//	if (AfxHookSource::Gui::OnSetCapture(hWnd, result))
+//		return result;
+
+	return SetCapture(hWnd);
+}
+
+BOOL WINAPI new_ReleaseCapture()
+{
+//	if (AfxHookSource::Gui::OnReleaseCapture())
+//		return TRUE;
+
+	return ReleaseCapture();
+}
+
+
+////////////////////////////////////////////////////////////////////////////////
+
+CamPath g_CamPath;
+
+class CMirvCampath_Time : public IMirvCampath_Time
+{
+public:
+	virtual double GetTime() {
+		// Can be paused time, we don't support that currently.
+		return g_MirvTime.curtime_get();
+	}
+	virtual double GetCurTime() {
+		return g_MirvTime.curtime_get();
+	}
+	virtual bool GetCurrentDemoTick(int& outTick) {
+		return g_MirvTime.GetCurrentDemoTick(outTick);
+	}
+	virtual bool GetCurrentDemoTime(double& outDemoTime) {
+		return g_MirvTime.GetCurrentDemoTime(outDemoTime);
+	}
+	virtual bool GetDemoTickFromDemoTime(double curTime, double time, int& outTick) {
+		outTick = (int)round(time / g_MirvTime.interval_per_tick_get());
+		return true;
+	}
+	virtual bool GetDemoTimeFromClientTime(double curTime, double time, double& outDemoTime) {
+		double current_demo_time;
+		if(GetCurrentDemoTime(current_demo_time)) {
+			outDemoTime = time - (curTime - current_demo_time);
+			return true;
+		}
+		return false;
+	}
+    virtual bool GetDemoTickFromClientTime(double curTime, double targetTime, int& outTick)
+    {
+        double demoTime;
+        return GetDemoTimeFromClientTime(curTime, targetTime, demoTime) && GetDemoTickFromDemoTime(curTime, demoTime, outTick);
+    }
+} g_MirvCampath_Time;
+
+class CMirvCampath_Camera : public IMirvCampath_Camera
+{
+public:
+	virtual SMirvCameraValue GetCamera() {
+		return SMirvCameraValue(			
+			g_MirvInputEx.LastCameraOrigin[0],
+			g_MirvInputEx.LastCameraOrigin[1],
+			g_MirvInputEx.LastCameraOrigin[2],
+			g_MirvInputEx.LastCameraAngles[0],
+			g_MirvInputEx.LastCameraAngles[1],
+			g_MirvInputEx.LastCameraAngles[2],
+			g_MirvInputEx.LastCameraFov
+		);
+	}
+} g_MirvCampath_Camera;
+
+class CMirvCampath_Drawer : public IMirvCampath_Drawer
+{
+public:
+	virtual bool GetEnabled() {
+		return g_CampathDrawer.Draw_get();
+	}
+	virtual void SetEnabled(bool value) {
+		g_CampathDrawer.Draw_set(value);
+	}
+	virtual bool GetDrawKeyframeAxis() {
+		return g_CampathDrawer.GetDrawKeyframeAxis();
+	}
+	virtual void SetDrawKeyframeAxis(bool value) {
+		g_CampathDrawer.SetDrawKeyframeAxis(value);
+	}
+	virtual bool GetDrawKeyframeCam() {
+		return g_CampathDrawer.GetDrawKeyframeCam();
+	}
+	virtual void SetDrawKeyframeCam(bool value) {
+		g_CampathDrawer.SetDrawKeyframeCam(value);
+	}
+
+	virtual float GetDrawKeyframeIndex() { return g_CampathDrawer.GetDrawKeyframeIndex(); }
+	virtual void SetDrawKeyframeIndex(float value) { g_CampathDrawer.SetDrawKeyframeIndex(value); }
+
+} g_MirvCampath_Drawer;
+
+CON_COMMAND(mirv_campath, "camera paths")
+{
+	if (nullptr == g_pGlobals)
+	{
+		advancedfx::Warning("Error: Hooks not installed.\n");
+		return;
+	}
+
+	MirvCampath_ConCommand(args, advancedfx::Message, advancedfx::Warning, &g_CamPath, &g_MirvCampath_Time, &g_MirvCampath_Camera, &g_MirvCampath_Drawer);
+}
+
+double MirvCamIO_GetTimeFn(void) {
+	return g_MirvTime.curtime_get();
+}
+
+CON_COMMAND(mirv_camio, "New camera motion data import / export.") {
+	g_S2CamIO.Console_CamIO(args);
+}
+
+
+static bool g_bViewOverriden = false;
+static float g_fFovOverride = 90.0f;
+static float * g_pFov = nullptr;
+int g_iWidth = 1920;
+int g_iHeight = 1080;
+SOURCESDK::VMatrix g_WorldToScreenMatrix;
+
+extern bool g_b_on_c_view_render_setup_view;
+
+extern bool MirvFovOverride(float &fov);
+
+bool CS2_Client_CSetupView_Trampoline_IsPlayingDemo(void *ThisCViewSetup) {
+	if(!g_pEngineToClient) return false;
+
+	bool originOrAnglesOverriden = false;
+
+	float curTime = g_MirvTime.curtime_get(); //TODO: + m_PausedTime
+	float absTime = g_MirvTime.absoluteframetime_get();
+
+	int *pWidth = (int*)((unsigned char *)ThisCViewSetup + 0x434);
+	int *pHeight = (int*)((unsigned char *)ThisCViewSetup + 0x43C);
+
+	float *pFov = (float*)((unsigned char *)ThisCViewSetup + 0x498);
+	float *pViewOrigin = (float*)((unsigned char *)ThisCViewSetup + 0x4a0);
+	float *pViewAngles = (float*)((unsigned char *)ThisCViewSetup + 0x4b8);
+
+	int width = *pWidth;
+	int height = *pHeight;
+	float Tx = pViewOrigin[0];
+	float Ty = pViewOrigin[1];
+	float Tz = pViewOrigin[2];
+	float Rx = pViewAngles[0];
+	float Ry = pViewAngles[1];
+	float Rz = pViewAngles[2];
+	float Fov = *pFov;
+
+	//advancedfx::Message("Console: %i [%ix%i]\n", (g_pGameUIService->Con_IsVisible()?1:0),width,height);
+
+	//advancedfx::Message("%f: (%f,%f,%f) (%f,%f,%f) [%f]\n",curTime,pViewOrigin[0],pViewOrigin[1],pViewOrigin[2],pViewAngles[0],pViewAngles[1],pViewAngles[2],*pFov);
+
+	g_MirvInputEx.GameCameraOrigin[0] = Tx;
+	g_MirvInputEx.GameCameraOrigin[1] = Ty;
+	g_MirvInputEx.GameCameraOrigin[2] = Tz;
+	g_MirvInputEx.GameCameraAngles[0] = Rx;
+	g_MirvInputEx.GameCameraAngles[1] = Ry;
+	g_MirvInputEx.GameCameraAngles[2] = Rz;
+	g_MirvInputEx.GameCameraFov = Fov;
+
+	if (g_CamPath.Enabled_get() && g_CamPath.CanEval())
+	{
+		double campathCurTime = curTime - g_CamPath.GetOffset();
+		if(g_CamPath.GetHold()) {
+			if(campathCurTime > g_CamPath.GetUpperBound()) campathCurTime = g_CamPath.GetUpperBound();
+			else if(campathCurTime < g_CamPath.GetLowerBound()) campathCurTime = g_CamPath.GetLowerBound();
+		}
+
+		// no extrapolation:
+		if (g_CamPath.GetLowerBound() <= campathCurTime && campathCurTime <= g_CamPath.GetUpperBound())
+		{
+			CamPathValue val = g_CamPath.Eval(campathCurTime);
+			QEulerAngles ang = val.R.ToQREulerAngles().ToQEulerAngles();
+
+			//Tier0_Msg("================",curTime);
+			//Tier0_Msg("currenTime = %f",curTime);
+			//Tier0_Msg("vCp = %f %f %f\n", val.X, val.Y, val.Z);
+
+			originOrAnglesOverriden = true;
+
+			Tx = (float)val.X;
+			Ty = (float)val.Y;
+			Tz = (float)val.Z;
+
+			Rx = (float)ang.Pitch;
+			Ry = (float)ang.Yaw;
+			Rz = (float)ang.Roll;
+
+			Fov = (float)val.Fov;
+		}
+	}
+
+	if (g_S2CamIO.GetCamImport())
+	{
+		CamIO::CamData camData;
+
+		if (g_S2CamIO.GetCamImport()->GetCamData(curTime, width, height, camData))
+		{
+			originOrAnglesOverriden = true;
+
+			Tx = (float)camData.XPosition;
+			Ty = (float)camData.YPosition;
+			Tz = (float)camData.ZPosition;
+			Rx = (float)camData.YRotation;
+			Ry = (float)camData.ZRotation;
+			Rz = (float)camData.XRotation;
+			Fov = (float)camData.Fov;
+		}
+	}	
+
+	if(MirvFovOverride(Fov)) originOrAnglesOverriden = true;
+
+	if(g_MirvInputEx.m_MirvInput->Override(g_MirvInputEx.LastFrameTime, Tx,Ty,Tz,Rx,Ry,Rz,Fov)) originOrAnglesOverriden = true;
+
+	if(g_b_on_c_view_render_setup_view) {
+		AfxHookSourceRsView currentView = {Tx,Ty,Tz,Rx,Ry,Rz,Fov};
+		AfxHookSourceRsView gameView = {(float)g_MirvInputEx.GameCameraOrigin[0],(float)g_MirvInputEx.GameCameraOrigin[1],(float)g_MirvInputEx.GameCameraOrigin[2],(float)g_MirvInputEx.GameCameraAngles[0],(float)g_MirvInputEx.GameCameraAngles[1],(float)g_MirvInputEx.GameCameraAngles[2],(float)g_MirvInputEx.GameCameraFov};
+		AfxHookSourceRsView lastView = {(float)g_MirvInputEx.LastCameraOrigin[0],(float)g_MirvInputEx.LastCameraOrigin[1],(float)g_MirvInputEx.LastCameraOrigin[2],(float)g_MirvInputEx.LastCameraAngles[0],(float)g_MirvInputEx.LastCameraAngles[1],(float)g_MirvInputEx.LastCameraAngles[2],(float)g_MirvInputEx.LastCameraFov};
+		if(AfxHookSource2Rs_OnCViewRenderSetupView(
+			curTime, absTime, (float)g_MirvInputEx.LastFrameTime,
+			currentView, gameView, lastView,
+			width,height
+		)) {
+			Tx = currentView.x;
+			Ty = currentView.y;
+			Tz = currentView.z;
+			Rx = currentView.rx;
+			Ry = currentView.ry;
+			Rz = currentView.rz;
+			Fov = currentView.fov;
+			originOrAnglesOverriden = true;
+		}		
+	}
+
+	if (g_S2CamIO.GetCamExport())
+	{
+		CamIO::CamData camData;
+
+		camData.Time = curTime;
+		camData.XPosition = Tx;
+		camData.YPosition = Ty;
+		camData.ZPosition = Tz;
+		camData.YRotation = Rx;
+		camData.ZRotation = Ry;
+		camData.XRotation = Rz;
+		camData.Fov = Fov;
+
+		g_S2CamIO.GetCamExport()->WriteFrame(width, height, camData);
+	}	
+
+	if(originOrAnglesOverriden) {
+		pViewOrigin[0] = Tx;
+		pViewOrigin[1] = Ty;
+		pViewOrigin[2] = Tz;
+
+		pViewAngles[0] = Rx;
+		pViewAngles[1] = Ry;
+		pViewAngles[2] = Rz;
+
+		*pFov = Fov;
+
+		g_bViewOverriden = true;
+		g_fFovOverride = Fov;
+		g_pFov = pFov;
+	} else {
+		g_bViewOverriden = false;
+	}
+
+	g_iWidth = width;
+	g_iHeight = height;
+
+	g_MirvInputEx.LastCameraOrigin[0] = Tx;
+	g_MirvInputEx.LastCameraOrigin[1] = Ty;
+	g_MirvInputEx.LastCameraOrigin[2] = Tz;
+	g_MirvInputEx.LastCameraAngles[0] = Rx;
+	g_MirvInputEx.LastCameraAngles[1] = Ry;
+	g_MirvInputEx.LastCameraAngles[2] = Rz;
+	g_MirvInputEx.LastCameraFov = Fov;
+
+	g_MirvInputEx.LastFrameTime = absTime;
+
+	g_MirvInputEx.LastWidth = width;
+	g_MirvInputEx.LastHeight = height;
+
+	g_MirvInputEx.m_MirvInput->Supply_MouseFrameEnd();
+
+	g_CurrentGameCamera.origin[0] = Tx;
+	g_CurrentGameCamera.origin[1] = Ty;
+	g_CurrentGameCamera.origin[2] = Tz;
+	g_CurrentGameCamera.angles[0] = Rx;
+	g_CurrentGameCamera.angles[1] = Ry;
+	g_CurrentGameCamera.angles[2] = Rz;
+	g_CurrentGameCamera.time = curTime;
+
+	return g_pEngineToClient->IsPlayingDemo();
+}
+
+typedef void (__fastcall * Unk_Override_Fov_t)(void *param_1,int param_2);
+Unk_Override_Fov_t g_Old_Unk_Override_Fov = nullptr;
+void __fastcall New_Unk_Override_Fov(void *param_1,int param_2) {
+
+	if(g_bViewOverriden) {
+		float * pWeaponFov = g_pFov + 1;
+		float oldFov = *g_pFov;
+		float oldWeaponFov = *pWeaponFov;
+
+		g_Old_Unk_Override_Fov(param_1,param_2);
+
+		*g_pFov = Apply_FovScaling(g_MirvInputEx.LastWidth, g_MirvInputEx.LastHeight, oldFov, FovScaling_AlienSwarm);
+		*pWeaponFov = Apply_FovScaling(g_MirvInputEx.LastWidth, g_MirvInputEx.LastHeight, oldWeaponFov, FovScaling_AlienSwarm);
+	} else {
+		g_Old_Unk_Override_Fov(param_1,param_2);
+	}
+}
+
+/*size_t ofsProj = 0;
+
+DirectX::XMMATRIX g_Mul = {
+	{1,0,0,0},
+	{0,1,0,0},
+	{0,0,1,0},
+	{0,0,0,1}
+};
+
+bool transpose = false;
+
+CON_COMMAND(__mirv_t,"") {
+	if(args->ArgC()>=2) transpose = 0 != atoi(args->ArgV(1));
+}
+
+CON_COMMAND(__mirv_o,"") {
+	advancedfx::Message("=> %i\n",ofsProj);
+
+	float b0 = ((ofsProj>>0) & 1) ? -1 : 1;
+	float b1 = ((ofsProj>>1) & 1) ? -1 : 1;
+	float b2 = ((ofsProj>>2) & 1) ? -1 : 1;
+
+	switch((ofsProj>>3)%6) {
+	default:
+	case 0:
+		// 0 1 2
+		g_Mul = DirectX::XMMATRIX(
+			b0, 0, 0, 0,
+			0, b1, 0, 0,
+			0, 0, b2, 0,
+			0, 0, 0, 1
+		);
+		break;
+	case 1:
+		// 0 2 1
+		g_Mul = DirectX::XMMATRIX(
+			b0, 0, 0, 0,
+			0, 0, b2, 0,
+			0, b1, 0, 0,
+			0, 0, 0, 1
+		);
+		break;
+	case 2:
+		// 1 0 2
+		g_Mul = DirectX::XMMATRIX(
+			0, b1, 0, 0,
+			b0, 0, 0, 0,
+			0, 0, b2, 0,
+			0, 0, 0, 1
+		);
+		break;
+	case 3:
+		// 1 2 0
+		// 0 1 2
+		g_Mul = DirectX::XMMATRIX(
+			0, b1, 0, 0,
+			0, 0, b2, 0,
+			b0, 0, 0, 0,
+			0, 0, 0, 1
+		);
+		break;
+	case 4:
+		// 2 0 1
+		g_Mul = DirectX::XMMATRIX(
+			0, 0, b2, 0,
+			b0, 0, 0, 0,
+			0, b1, 0, 0,
+			0, 0, 0, 1
+		);		
+		break;
+	case 5:
+		// 2 1 0
+		g_Mul = DirectX::XMMATRIX(
+			0, 0, b2, 0,
+			0, b1, 0, 0,
+			b0, 0, 0, 0,
+			0, 0, 0, 1
+		);		
+		break;
+	}
+
+
+	ofsProj = (ofsProj + 1)%48;
+}*/
+
+typedef void (__fastcall * CViewRender_UnkMakeMatrix_t)(void* This);
+CViewRender_UnkMakeMatrix_t g_Old_CViewRender_UnkMakeMatrix = nullptr;
+void __fastcall New_CViewRender_UnkMakeMatrix(void* This) {
+	
+	g_Old_CViewRender_UnkMakeMatrix(This);
+	//memcpy(g_WorldToScreenMatrix.m,(unsigned char*)This + 0x1b8,sizeof(g_WorldToScreenMatrix.m));
+
+
+	/*DirectX::XMMATRIX * proj = (DirectX::XMMATRIX *)((unsigned char*)This + 0x298);
+	DirectX::XMMATRIX result = g_Mul * *proj;
+	if(transpose) result = DirectX::XMMatrixTranspose(result);
+
+	g_WorldToScreenMatrix.m[0][0] = result(0,0);
+	g_WorldToScreenMatrix.m[0][1] = result(0,1);
+	g_WorldToScreenMatrix.m[0][2] = result(0,2);
+	g_WorldToScreenMatrix.m[0][3] = result(0,3);
+	g_WorldToScreenMatrix.m[1][0] = result(1,0);
+	g_WorldToScreenMatrix.m[1][1] = result(1,1);
+	g_WorldToScreenMatrix.m[1][2] = result(1,2);
+	g_WorldToScreenMatrix.m[1][3] = result(1,3);
+	g_WorldToScreenMatrix.m[2][0] = result(2,0);
+	g_WorldToScreenMatrix.m[2][1] = result(2,1);
+	g_WorldToScreenMatrix.m[2][2] = result(2,2);
+	g_WorldToScreenMatrix.m[2][3] = result(2,3);
+	g_WorldToScreenMatrix.m[3][0] = result(3,0);
+	g_WorldToScreenMatrix.m[3][1] = result(3,1);
+	g_WorldToScreenMatrix.m[3][2] = result(3,2);
+	g_WorldToScreenMatrix.m[3][3] = result(3,3);*/
+
+	float* proj = (float*)((unsigned char*)This + 0x218);
+	SOURCESDK::VMatrix projectionMatrix;
+	projectionMatrix.m[0][0] = proj[4 * 0 + 0];
+	projectionMatrix.m[0][1] = proj[4 * 0 + 1];
+	projectionMatrix.m[0][2] = proj[4 * 0 + 2];
+	projectionMatrix.m[0][3] = proj[4 * 0 + 3];
+	projectionMatrix.m[1][0] = proj[4 * 1 + 0];
+	projectionMatrix.m[1][1] = proj[4 * 1 + 1];
+	projectionMatrix.m[1][2] = proj[4 * 1 + 2];
+	projectionMatrix.m[1][3] = proj[4 * 1 + 3];
+	projectionMatrix.m[2][0] = proj[4 * 2 + 0];
+	projectionMatrix.m[2][1] = proj[4 * 2 + 1];
+	projectionMatrix.m[2][2] = proj[4 * 2 + 2];
+	projectionMatrix.m[2][3] = proj[4 * 2 + 3];
+	projectionMatrix.m[3][0] = proj[4 * 3 + 0];
+	projectionMatrix.m[3][1] = proj[4 * 3 + 1];
+	projectionMatrix.m[3][2] = proj[4 * 3 + 2];
+	projectionMatrix.m[3][3] = proj[4 * 3 + 3];
+	RenderSystemDX11_SupplyProjectionMatrix(projectionMatrix);
+
+	proj = (float *)((unsigned char*)This + 0x298);
+	g_WorldToScreenMatrix.m[0][0] = proj[4*0+0];
+	g_WorldToScreenMatrix.m[0][1] = proj[4*0+1];
+	g_WorldToScreenMatrix.m[0][2] = proj[4*0+2];
+	g_WorldToScreenMatrix.m[0][3] = proj[4*0+3];
+	g_WorldToScreenMatrix.m[1][0] = proj[4*1+0];
+	g_WorldToScreenMatrix.m[1][1] = proj[4*1+1];
+	g_WorldToScreenMatrix.m[1][2] = proj[4*1+2];
+	g_WorldToScreenMatrix.m[1][3] = proj[4*1+3];
+	g_WorldToScreenMatrix.m[2][0] = proj[4*2+0];
+	g_WorldToScreenMatrix.m[2][1] = proj[4*2+1];
+	g_WorldToScreenMatrix.m[2][2] = proj[4*2+2];
+	g_WorldToScreenMatrix.m[2][3] = proj[4*2+3];
+	g_WorldToScreenMatrix.m[3][0] = proj[4*3+0];
+	g_WorldToScreenMatrix.m[3][1] = proj[4*3+1];
+	g_WorldToScreenMatrix.m[3][2] = proj[4*3+2];
+	g_WorldToScreenMatrix.m[3][3] = proj[4*3+3];
+
+	g_CampathDrawer.OnEngineThread_SetupViewDone();
+}
+
+/*
+class CCSGOVScriptGameSystem;
+CCSGOVScriptGameSystem * g_pCCSGOVScriptGameSystem = nullptr;
+typedef void (__fastcall * CCSGOVScriptGameSystem_UnkAddon_t)(CCSGOVScriptGameSystem *This); //:000
+typedef unsigned long long int (__fastcall * CCSGOVScriptGameSystem_UnkLoadScriptFile_t)(CCSGOVScriptGameSystem *This, const char * pszFileName, bool bDebugPrint); //:008
+CCSGOVScriptGameSystem_UnkAddon_t g_Old_CCSGOVScriptGameSystem_UnkAddon = nullptr;
+CCSGOVScriptGameSystem_UnkLoadScriptFile_t g_Old_CCSGOVScriptGameSystem_UnkLoadScriptFile = nullptr;
+
+void __fastcall New_CSGOVScriptGameSystem_UnkAddon(CCSGOVScriptGameSystem *This) {
+	g_pCCSGOVScriptGameSystem = This;
+	//advancedfx::Message("GOT IT\n");
+	g_Old_CCSGOVScriptGameSystem_UnkAddon(This);
+}
+
+unsigned long long int __fastcall New_CCSGOVScriptGameSystem_UnkLoadScriptFile(CCSGOVScriptGameSystem *This, const char * pszFileName, bool bDebugPrint) {
+	g_pCCSGOVScriptGameSystem = This;
+	advancedfx::Message("LoadScriptFile: %s\n",pszFileName);
+	return g_Old_CCSGOVScriptGameSystem_UnkLoadScriptFile(This, pszFileName, bDebugPrint);
+}
+
+CON_COMMAND(mirv_vscript_exec,"") {
+	int argC = args->ArgC();
+	const char * arg0 = args->ArgV(0);
+
+	if(2 <= argC) {
+		if(g_pCCSGOVScriptGameSystem) {
+			g_Old_CCSGOVScriptGameSystem_UnkLoadScriptFile(g_pCCSGOVScriptGameSystem,args->ArgV(1),3 <= argC ? (0 != atoi(args->ArgV(2))) : true);
+		} else advancedfx::Warning("Missing hooks.\n");
+		return;
+	}
+	advancedfx::Message("%s <script_file_name> [<debug_print=0|1>]\n",arg0);
+}*/
+
+/*
+typedef void (__fastcall * CViewRender_RenderView_t)(void* This, void * pViewSetup, void * pHudViewSetup, void * nClearFlags, void * whatToDraw);
+CViewRender_RenderView_t g_Old_CViewRender_RenderView = nullptr;
+
+enum ClearFlags_t
+{
+	VIEW_CLEAR_COLOR = 0x1,
+	VIEW_CLEAR_DEPTH = 0x2,
+	VIEW_CLEAR_FULL_TARGET = 0x4,
+	VIEW_NO_DRAW = 0x8,
+	VIEW_CLEAR_OBEY_STENCIL = 0x10, // Draws a quad allowing stencil test to clear through portals
+	VIEW_CLEAR_STENCIL = 0x20,
+};
+void __fastcall New_CViewRender_RenderView(void* This, void * pViewSetup, void * pHudViewSetup, void * nClearFlags, void * whatToDraw) {
+	return;
+	g_Old_CViewRender_RenderView(This, pViewSetup, pHudViewSetup, nClearFlags, whatToDraw);
+	//if((nClearFlags & VIEW_CLEAR_COLOR)&&(nClearFlags && VIEW_CLEAR_DEPTH)) {
+		DrawCampath();
+	//}
+}*/
+
+void HookClientDll(HMODULE clientDll) {
+	static bool bFirstCall = true;
+	if(!bFirstCall) return;
+	bFirstCall = false;
+
+	Afx::BinUtils::MemRange textRange = Afx::BinUtils::MemRange::FromEmpty();
+	Afx::BinUtils::MemRange dataRange = Afx::BinUtils::MemRange::FromEmpty();
+	{
+		Afx::BinUtils::ImageSectionsReader sections((HMODULE)clientDll);
+		if(!sections.Eof()) {
+			textRange = sections.GetMemRange();
+			sections.Next();
+			if(!sections.Eof()){
+				dataRange = sections.GetMemRange();
+			}
+		}
+	}
+
+	/*
+		This is where it checks for engine->IsPlayingDemo() (and afterwards for cl_demoviewoverride (float))
+		before under these conditions it is calling CalcDemoViewOverride, so this is in CViewRender::SetUpView:
+
+00007ffa`178e34ec 488b0d05b37e01   mov     rcx, qword ptr [7FFA190CE7F8h]
+00007ffa`178e34f3 488b01           mov     rax, qword ptr [rcx]
+00007ffa`178e34f6 ff9050010000     call    qword ptr [rax+150h]
+00007ffa`178e34fc 0f57ff           xorps   xmm7, xmm7
+00007ffa`178e34ff 84c0             test    al, al
+00007ffa`178e3501 7457             je      00007FFA178E355A
+00007ffa`178e3503 baffffffff       mov     edx, 0FFFFFFFFh
+                 ff ff
+
+	*/
+	{
+		Afx::BinUtils::MemRange result = FindPatternString(textRange, "48 8b 0d ?? ?? ?? ?? 48 8b 01 ff 90 50 01 00 00 0f 57 ff 84 c0 74 57 ba ff ff ff ff");
+																	  
+		if (!result.IsEmpty()) {
+			/*
+				These are the top 16 bytes we change to:
+
+180882cd6	4C89f1               mov     rcx, r14
+			48b8???????????????? mov     rax, ???????????????? <-- here we load our hook's address
+			ff10                 call    qword ptr [rax]
+			90                   nop
+			*/
+			unsigned char asmCode[16]={
+				0x4C, 0x89, 0xf1,
+				0x48, 0xb8, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+				0xff, 0x10,
+				0x90
+			};
+			static LPVOID ptr = CS2_Client_CSetupView_Trampoline_IsPlayingDemo;
+			LPVOID ptrPtr = &ptr;
+			memcpy(&asmCode[5], &ptrPtr, sizeof(LPVOID));
+
+			MdtMemBlockInfos mbis;
+			MdtMemAccessBegin((LPVOID)result.Start, 16, &mbis);
+			memcpy((LPVOID)result.Start, asmCode, 16);
+			MdtMemAccessEnd(&mbis);
+		}
+		else
+			ErrorBox(MkErrStr(__FILE__, __LINE__));
+	}	
+
+	/*
+		The FOV is overridden / computed a second time in the function called in
+		CViewRender::SetUpView (see hook above on how to find it):
+		
+       180898360 49 8b cf        MOV        RCX,R15
+       180898363 8b 10           MOV        EDX,dword ptr [RAX]
+       180898365 e8 b6 fd        CALL       FUN_180888120 <-- we detour this function.                                   undefined FUN_180888120()
+                 fe ff
+       18089836a 4c 8b c7        MOV        R8,RDI
+       18089836d 41 c6 87        MOV        byte ptr [R15 + 0x1330],0x0
+                 30 13 00 
+                 00 00
+
+		void FUN_180888120(longlong *param_1,int param_2) { ... }
+	*/
+	// Commenting out this for now since it's now in the same function as above
+	// {
+	// 	Afx::BinUtils::MemRange result = FindPatternString(textRange, "48 8B C4 53 55 56 57 41 56 41 57");
+	// 	if (!result.IsEmpty()) {
+	// 		g_Old_Unk_Override_Fov = (Unk_Override_Fov_t)result.Start;
+	// 		DetourTransactionBegin();
+	// 		DetourUpdateThread(GetCurrentThread());
+	// 		DetourAttach((PVOID*)&g_Old_Unk_Override_Fov, New_Unk_Override_Fov);
+	// 		if(NO_ERROR != DetourTransactionCommit()) ErrorBox(MkErrStr(__FILE__, __LINE__));            
+	// 	} else ErrorBox(MkErrStr(__FILE__, __LINE__));
+	// }
+/*
+	if(void ** vtable = (void**)Afx::BinUtils::FindClassVtable(clientDll,".?AVCRenderingPipelineCsgo@@", 0, 0x0)) {
+		g_Old_CViewRender_RenderView = (CViewRender_RenderView_t)vtable[0] ;
+        DetourTransactionBegin();
+        DetourUpdateThread(GetCurrentThread());
+        DetourAttach(&(PVOID&)g_Old_CViewRender_RenderView,New_CViewRender_RenderView);
+        // doesn't work without error // DetourAttach(&(PVOID&)g_Old_CCSGOVScriptGameSystem_UnkLoadScriptFile, New_CCSGOVScriptGameSystem_UnkLoadScriptFile);
+        if(NO_ERROR != DetourTransactionCommit()) ErrorBox(MkErrStr(__FILE__, __LINE__));
+	} else ErrorBox(MkErrStr(__FILE__, __LINE__));*/
+
+	if(!Hook_CGameEventManager((void*)clientDll)) ErrorBox(MkErrStr(__FILE__, __LINE__));
+/*
+	if(void ** vtable = (void**)Afx::BinUtils::FindClassVtable(clientDll,".?AVCCSGOVScriptGameSystem@@", 0, 0x10)) {
+		g_Old_CCSGOVScriptGameSystem_UnkAddon = (CCSGOVScriptGameSystem_UnkAddon_t)vtable[0] ;
+		g_Old_CCSGOVScriptGameSystem_UnkLoadScriptFile = (CCSGOVScriptGameSystem_UnkLoadScriptFile_t)vtable[5] ;
+        DetourTransactionBegin();
+        DetourUpdateThread(GetCurrentThread());
+        DetourAttach(&(PVOID&)g_Old_CCSGOVScriptGameSystem_UnkAddon,New_CSGOVScriptGameSystem_UnkAddon);
+        // doesn't work without error // DetourAttach(&(PVOID&)g_Old_CCSGOVScriptGameSystem_UnkLoadScriptFile, New_CCSGOVScriptGameSystem_UnkLoadScriptFile);
+        if(NO_ERROR != DetourTransactionCommit()) ErrorBox(MkErrStr(__FILE__, __LINE__));
+		else AfxDetourPtr((PVOID *)&(vtable[7]), New_CCSGOVScriptGameSystem_UnkLoadScriptFile, (PVOID*)&g_Old_CCSGOVScriptGameSystem_UnkLoadScriptFile);
+	} else ErrorBox(MkErrStr(__FILE__, __LINE__));*/
+
+	if(void ** vtable = (void**)Afx::BinUtils::FindClassVtable(clientDll,".?AVCViewRender@@", 0, 0x0)) {
+		g_Old_CViewRender_UnkMakeMatrix = (CViewRender_UnkMakeMatrix_t)vtable[4] ;
+        DetourTransactionBegin();
+        DetourUpdateThread(GetCurrentThread());
+        DetourAttach(&(PVOID&)g_Old_CViewRender_UnkMakeMatrix,New_CViewRender_UnkMakeMatrix);
+        if(NO_ERROR != DetourTransactionCommit()) ErrorBox(MkErrStr(__FILE__, __LINE__));
+	} else ErrorBox(MkErrStr(__FILE__, __LINE__));
+
+	// client entity system related
+	{
+		// "Entities/Client Entity Count"
+		auto unkFn = Afx::BinUtils::FindPatternString(textRange, "40 55 53 48 8d ac 24 ?? ?? ?? ?? 48 81 ec ?? ?? ?? ?? 48 8b 0d ?? ?? ?? ?? 33 d2 e8 ?? ?? ?? ??");
+		if (!unkFn.IsEmpty()) {
+			void * pEntityList = (void *)(unkFn.Start+18+7+*(int*)(unkFn.Start+18+3));
+			void * pFnGetHighestEntityIterator = (void *)(unkFn.Start+27+5+*(int*)(unkFn.Start+27+1));
+
+			// see near "no such entity %d\n" called with pEntityList and uint
+            // or near "Format: ent_find_index <index>\n" called only with uint and there's pEntityList inside with uint
+			auto fnGetEntityFromIndexMem = Afx::BinUtils::FindPatternString(textRange, "4c 8d 49 10 81 fa fe 7f 00 00");
+			if (!fnGetEntityFromIndexMem.IsEmpty()) {
+				auto pFnGetEntityFromIndex = (void*)(fnGetEntityFromIndexMem.Start);
+				if(! Hook_ClientEntitySystem( pEntityList, pFnGetHighestEntityIterator, pFnGetEntityFromIndex )) ErrorBox(MkErrStr(__FILE__, __LINE__));
+
+			} else ErrorBox(MkErrStr(__FILE__, __LINE__));
+
+		} else ErrorBox(MkErrStr(__FILE__, __LINE__));
+
+	}
+	/*
+	   GetSplitScreenPlayer(int): 
+	   This function is called in GetLocalPlayerController script function in clientDll, 
+	   go inside of function there and it's called with 0.
+
+       1808541f0 40 53           PUSH       RBX
+       1808541f2 48 83 ec 20     SUB        RSP,0x20
+       1808541f6 8b 91 9c        MOV        EDX,dword ptr [RCX + 0x9c]
+                 00 00 00
+       1808541fc 48 8b d9        MOV        RBX,RCX
+       1808541ff 83 fa ff        CMP        EDX,-0x1
+       180854202 0f 84 27        JZ         LAB_18085432f
+                 01 00 00
+       180854208 4c 8b 0d        MOV        R9,qword ptr [DAT_1818b7d68]
+                 59 3b 06 01
+       18085420f 4d 85 c9        TEST       R9,R9
+
+	*/
+	{
+		Afx::BinUtils::MemRange range_get_split_screen_player = Afx::BinUtils::FindPatternString(textRange, "48 83 EC ?? 83 F9 ?? 75 ?? 48 8B 0D ?? ?? ?? ?? 48 8D 54 24 ?? 48 8B 01 FF 90 ?? ?? ?? ?? 8B 08 48 63 C1 48 8D 0D ?? ?? ?? ?? 48 8B 04 C1 48 83 C4 ?? C3");
+		if(!range_get_split_screen_player.IsEmpty()) {
+			Hook_GetSplitScreenPlayer((void*)range_get_split_screen_player.Start);
+		} else ErrorBox(MkErrStr(__FILE__, __LINE__));
+	}
+}
+
+SOURCESDK::CreateInterfaceFn g_AppSystemFactory = nullptr;
+SOURCESDK::CS2::IMemAlloc *SOURCESDK::CS2::g_pMemAlloc = nullptr;
+SOURCESDK::CS2::ICvar * SOURCESDK::CS2::cvar = nullptr;
+SOURCESDK::CS2::ICvar * SOURCESDK::CS2::g_pCVar = nullptr;
+void * g_pSceneSystem = nullptr;
+
+typedef bool (__fastcall * CSceneSystem_WaitForRenderingToComplete_t)(void * This);
+CSceneSystem_WaitForRenderingToComplete_t g_Old_CSceneSystem_WaitForRenderingToComplete = nullptr;
+
+bool __fastcall New_CSceneSystem_WaitForRenderingToComplete(void * This) {
+	bool result = g_Old_CSceneSystem_WaitForRenderingToComplete(This);
+	//DrawCampath();
+	return result;
+}
+
+typedef int(* CCS2_Client_Connect_t)(void* This, SOURCESDK::CreateInterfaceFn appSystemFactory);
+CCS2_Client_Connect_t old_CCS2_Client_Connect;
+int new_CCS2_Client_Connect(void* This, SOURCESDK::CreateInterfaceFn appSystemFactory) {
+	static bool bFirstCall = true;
+
+	if (bFirstCall) {
+		bFirstCall = false;
+
+		void * iface = NULL;
+
+		if (SOURCESDK::CS2::g_pCVar = SOURCESDK::CS2::cvar = (SOURCESDK::CS2::ICvar*)appSystemFactory(SOURCESDK_CS2_CVAR_INTERFACE_VERSION, NULL)) {
+		}
+		else ErrorBox(MkErrStr(__FILE__, __LINE__));
+
+		if (g_pEngineToClient = (SOURCESDK::CS2::ISource2EngineToClient*)appSystemFactory(SOURCESDK_CS2_ENGINE_TO_CLIENT_INTERFACE_VERSION, NULL)) {
+		}
+		else ErrorBox(MkErrStr(__FILE__, __LINE__));
+
+		if (g_pGameUIService = (SOURCESDK::CS2::IGameUIService*)appSystemFactory(SOURCESDK_CS2_GAMEUISERVICE_INTERFACE_VERSION, NULL)) {
+		}
+		else ErrorBox(MkErrStr(__FILE__, __LINE__));
+
+		if (g_pSceneSystem = (SOURCESDK::CS2::IGameUIService*)appSystemFactory("SceneSystem_002", NULL)) {
+			Hook_SceneSystem_WaitForRenderingToComplete(g_pSceneSystem);
+		}
+		else ErrorBox(MkErrStr(__FILE__, __LINE__));
+	}
+
+	return old_CCS2_Client_Connect(This, appSystemFactory);
+}
+
+CON_COMMAND(mirv_cvar_unhide_all, "Unlocks cmds and cvars.") {
+	int total = 0;
+	int nUnhidden = 0;
+	for(size_t i = 0; i < 65536; i++ )
+	{
+		SOURCESDK::CS2::CCmd * cmd = SOURCESDK::CS2::g_pCVar->GetCmd(i);
+		if(nullptr == cmd) break;
+		int nFlags = cmd->GetFlags();
+		if(nFlags == 0x400) break;
+		total++;
+		if(nFlags & (SOURCESDK_CS2_FCVAR_DEVELOPMENTONLY | SOURCESDK_CS2_FCVAR_HIDDEN)) {
+//			fprintf(f1,"[+] %lli: 0x%08x: %s : %s\n", i, cmd->m_nFlags, cmd->m_pszName, cmd->m_pszHelpString);
+			cmd->SetFlags(nFlags &= ~(SOURCESDK::int64)(SOURCESDK_CS2_FCVAR_DEVELOPMENTONLY | SOURCESDK_CS2_FCVAR_HIDDEN));
+			nUnhidden++;
+		} else {
+//			fprintf(f1,"[ ] %lli: 0x%08x: %s : %s\n", i, cmd->m_nFlags, cmd->m_pszName, cmd->m_pszHelpString);
+		}
+	}
+	advancedfx::Message("==== Cmds total: %i (Cmds unhidden: %i) ====\n",total,nUnhidden);
+
+	total = 0;
+	nUnhidden = 0;
+	for(size_t i = 0; i < 65536; i++ )
+	{
+		SOURCESDK::CS2::Cvar_s * cvar = SOURCESDK::CS2::g_pCVar->GetCvar(i);
+		if(nullptr == cvar) break;
+		total++;
+		if(cvar->m_nFlags & (SOURCESDK_CS2_FCVAR_DEVELOPMENTONLY | SOURCESDK_CS2_FCVAR_HIDDEN)) {
+//			fprintf(f1,"[+] %lli: 0x%08x: %s : %s\n", i, cvar->m_nFlags, cvar->m_pszName, cvar->m_pszHelpString);
+			cvar->m_nFlags &= ~(SOURCESDK::int64)(SOURCESDK_CS2_FCVAR_DEVELOPMENTONLY | SOURCESDK_CS2_FCVAR_HIDDEN);
+			nUnhidden++;
+		} else {
+//			fprintf(f1,"[ ] %lli: 0x%08x: %s : %s\n", i, cvar->m_nFlags, cvar->m_pszName, cvar->m_pszHelpString);
+		}
+	}
+	
+	advancedfx::Message("==== Cvars total: %i (Cvars unhidden: %i) ====\n",total,nUnhidden);
+}
+
+CON_COMMAND(mirv_cvar_unlock_sv_cheats, "Unlocks sv_cheats on client (as much as possible).") {
+	int total = 0;
+	int nUnhidden = 0;
+	for(size_t i = 0; i < 65536; i++ )
+	{
+		SOURCESDK::CS2::CCmd * cmd = SOURCESDK::CS2::g_pCVar->GetCmd(i);
+		if(nullptr == cmd) break;
+		int nFlags = cmd->GetFlags();
+		if(nFlags == 0x400) break;
+		total++;
+		if(nFlags & (SOURCESDK_CS2_FCVAR_CHEAT)) {
+//			fprintf(f1,"[+] %lli: 0x%08x: %s : %s\n", i, cmd->m_nFlags, cmd->m_pszName, cmd->m_pszHelpString);
+			cmd->SetFlags(nFlags &= ~(SOURCESDK::int64)(SOURCESDK_CS2_FCVAR_CHEAT));
+			nUnhidden++;
+		} else {
+//			fprintf(f1,"[ ] %lli: 0x%08x: %s : %s\n", i, cmd->m_nFlags, cmd->m_pszName, cmd->m_pszHelpString);
+		}
+	}
+	advancedfx::Message("==== Cmds total: %i (Cmds unlocked: %i) ====\n",total,nUnhidden);
+
+	total = 0;
+	nUnhidden = 0;
+	for(size_t i = 0; i < 65536; i++ )
+	{
+		SOURCESDK::CS2::Cvar_s * cvar = SOURCESDK::CS2::g_pCVar->GetCvar(i);
+		if(nullptr == cvar) break;
+		total++;
+		if(cvar->m_nFlags & (SOURCESDK_CS2_FCVAR_CHEAT)) {
+//			fprintf(f1,"[+] %lli: 0x%08x: %s : %s\n", i, cvar->m_nFlags, cvar->m_pszName, cvar->m_pszHelpString);
+			cvar->m_nFlags &= ~(SOURCESDK::int64)(SOURCESDK_CS2_FCVAR_CHEAT);
+			nUnhidden++;
+		} else {
+//			fprintf(f1,"[ ] %lli: 0x%08x: %s : %s\n", i, cvar->m_nFlags, cvar->m_pszName, cvar->m_pszHelpString);
+		}
+		if(0 == strcmp("sv_cheats",cvar->m_pszName)) {
+			cvar->m_nFlags &= ~(SOURCESDK::int64)(SOURCESDK_CS2_FCVAR_REPLICATED| SOURCESDK_CS2_FCVAR_NOTIFY);
+			cvar->m_nFlags |= SOURCESDK_CS2_FCVAR_CLIENTDLL;
+			cvar->m_Value.m_bValue = true;			
+		}
+	}
+	
+	advancedfx::Message("==== Cvars total: %i (Cvars unlocked: %i) ====\n",total,nUnhidden);
+}
+
+typedef int(* CCS2_Client_Init_t)(void* This);
+CCS2_Client_Init_t old_CCS2_Client_Init;
+int new_CCS2_Client_Init(void* This) {
+	int result = old_CCS2_Client_Init(This);
+
+	if(!Hook_ClientEntitySystem2()) ErrorBox(MkErrStr(__FILE__, __LINE__));	
+
+	// Connect to reshade addon if present:
+	g_ReShadeAdvancedfx.Connect();
+
+	WrpRegisterCommands();
+
+	AfxHookSource2Rs_Engine_Init();
+
+	PrintInfo();
+
+	HookSchemaSystem(g_H_SchemaSystem);
+
+	if (g_pFileSystem) {
+		std::string path(GetHlaeFolder());
+		path.append("resources\\AfxHookSource2\\cs2");
+		g_pFileSystem->AddSearchPath(path.c_str(), "GAME");
+
+		const wchar_t* USRLOCALCSGO = _wgetenv(L"USRLOCALCSGO");
+		if (nullptr != USRLOCALCSGO) {
+			std::string USRLOCALCSGO_copy = "";
+			WideStringToUTF8String(USRLOCALCSGO, USRLOCALCSGO_copy);
+			if (USRLOCALCSGO_copy.size() > 0) g_pFileSystem->AddSearchPath(USRLOCALCSGO_copy.c_str(), "GAME");
+		}
+	}
+
+	return result;
+}
+
+CON_COMMAND(__mirv_print_search_paths, "")
+{
+	g_pFileSystem->PrintSearchPaths();
+}
+
+typedef void(* CCS2_Client_Shutdown_t)(void* This);
+CCS2_Client_Shutdown_t old_CCS2_Client_Shutdown;
+void new_CCS2_Client_Shutdown(void* This) {
+	AfxHookSource2Rs_Engine_Shutdown();
+
+	old_CCS2_Client_Shutdown(This);
+}
+
+
+typedef void * (* CS2_Client_SetGlobals_t)(void* This, void * pGlobals);
+CS2_Client_SetGlobals_t old_CS2_Client_SetGlobals;
+void *  new_CS2_Client_SetGlobals(void* This, void * pGlobals) {
+
+	g_pGlobals = (Cs2Gloabls_t)pGlobals;
+
+	return old_CS2_Client_SetGlobals(This, pGlobals);
+}
+
+class CExecuteClientCmdForCommandSystem : public IExecuteClientCmdForCommandSystem {
+public:
+	virtual void ExecuteClientCmd(const char * value) {
+		if(g_pEngineToClient) g_pEngineToClient->ExecuteClientCmd(0,value,true);
+	}
+} g_ExecuteClientCmdForCommandSystem;
+
+class CGetTickForCommandSystem : public IGetTickForCommandSystem {
+public:
+	virtual float GetTick() {
+		float tick = 0;
+		if(g_pEngineToClient) {
+			if(SOURCESDK::CS2::IDemoFile * pDemoFile = g_pEngineToClient->GetDemoFile()) {
+				tick = (float)pDemoFile->GetDemoTick() + g_MirvTime.interpolation_amount_get();
+			}
+		}
+		return tick;
+	}
+} g_GetTickForCommandSystem;
+
+class CGetTimeForCommandSystem : public IGetTimeForCommandSystem {
+public:
+	virtual float GetTime() {
+		return g_MirvTime.curtime_get();
+	}
+} g_GetTimeForCommandSystem;
+
+class CommandSystem g_CommandSystem(&g_ExecuteClientCmdForCommandSystem, &g_GetTickForCommandSystem, &g_GetTimeForCommandSystem);
+
+CON_COMMAND(mirv_cmd, "Command system (for scheduling commands).")
+{
+	g_CommandSystem.Console_Command(args);
+}
+
+class CMirvSkip_GotoDemoTick : public IMirvSkip_GotoDemoTick {
+	virtual void GotoDemoTick(int tick) {
+        std::ostringstream oss;
+        oss << "demo_gototick " << tick;
+        if(g_pEngineToClient) g_pEngineToClient->ExecuteClientCmd(0,oss.str().c_str(),true);		
+	}
+} g_MirvSkip_GotoDemoTick;
+
+CON_COMMAND(mirv_skip, "for skipping through demos (uses demo_gototick)")
+{
+    MirvSkip_ConsoleCommand(args, &g_MirvCampath_Time, &g_MirvSkip_GotoDemoTick);
+}
+
+extern void resetDefaultCloudColors();
+extern void resetCachedMaterials();
+
+typedef void * (* CS2_Client_LevelInitPreEntity_t)(void* This, void * pUnk1, void * pUnk2);
+CS2_Client_LevelInitPreEntity_t old_CS2_Client_LevelInitPreEntity;
+void * new_CS2_Client_LevelInitPreEntity(void* This, void * pUnk1, void * pUnk2) {
+	resetDefaultCloudColors();
+	resetCachedMaterials();
+	void * result = old_CS2_Client_LevelInitPreEntity(This, pUnk1, pUnk2);
+	g_CommandSystem.OnLevelInitPreEntity();
+	return result;
+}
+
+typedef void (* CS2_Client_FrameStageNotify_t)(void* This, SOURCESDK::CS2::ClientFrameStage_t curStage);
+
+CS2_Client_FrameStageNotify_t old_CS2_Client_FrameStageNotify;
+
+bool g_bForceClInterpRatio = true;
+
+void  new_CS2_Client_FrameStageNotify(void* This, SOURCESDK::CS2::ClientFrameStage_t curStage) {
+	
+	AfxHookSource2Rs_Engine_RunJobQueue();
+
+	/*
+	// React to demo being paused / unpaused to work around Valve's new bandaid client time "fix":
+	bool bIsDemoPaused = false;
+	if(g_pEngineToClient) {
+		if(SOURCESDK::CS2::IDemoFile * pDemoPlayer = g_pEngineToClient->GetDemoFile()) {
+			if(pDemoPlayer->IsPlayingDemo())
+				bIsDemoPaused = pDemoPlayer->IsDemoPaused();
+		}
+	}
+	if(bIsDemoPaused != g_DemoPausedData.IsPaused) {
+		if(bIsDemoPaused) {
+			g_DemoPausedData.FirstPausedCurtime = g_MirvTime.curtime_get();
+			g_DemoPausedData.FirstPausedInterpolationAmount = g_MirvTime.interpolation_amount_get();
+			g_DemoPausedData.IsPaused = true;
+		} else {
+			g_DemoPausedData.IsPaused = false;
+		}
+	}*/
+
+	// Work around demoui cursor sheningans:
+	// - Always manually fetch cursor pos.
+	// - Make room to move the cursor.
+	// - Hide cursor (can do this way because SDL3 never hides it, uses invisible one instead).
+	static bool bCursorHidden = false;
+	if(g_MirvInputEx.m_MirvInput->IsActive()) {
+		HWND hWnd = GetActiveWindow();
+		if(NULL != hWnd) {
+			if(!bCursorHidden) ShowCursor(FALSE);
+			else {
+				POINT point;
+				if(GetCursorPos(&point)) {
+					new_GetCursorPos(&point);
+				}
+			}
+			RECT rect;
+			if(GetClientRect(hWnd, &rect)) {
+				POINT pt {(rect.left+rect.right)/2,(rect.top+rect.bottom)/2};
+				if(ClientToScreen(hWnd,&pt)) {
+					new_SetCursorPos(pt.x, pt.y);
+				}
+			}
+		}
+		bCursorHidden = true;
+	}
+	else if(bCursorHidden) {
+		bCursorHidden = false;
+		ShowCursor(TRUE);
+	}	
+
+	switch(curStage) {
+	case 0:
+		if(g_bForceClInterpRatio && g_pEngineToClient->IsPlayingDemo()){
+			static SOURCESDK::CS2::Cvar_s * handle_cl_interp_ratio = SOURCESDK::CS2::g_pCVar->GetCvar(SOURCESDK::CS2::g_pCVar->FindConVar("cl_interp_ratio", false).Get());
+			if(handle_cl_interp_ratio){
+				if(0 == handle_cl_interp_ratio->m_Value.m_flValue) {
+					handle_cl_interp_ratio->m_Value.m_flValue = 1;
+				}
+			}
+		}
+		break;
+	case SOURCESDK::CS2::FRAME_RENDER_PASS:
+		g_CommandSystem.OnExecuteCommands();
+		if(g_SleepMs) Sleep(g_SleepMs);
+		break;
+	}
+
+	AfxHookSource2Rs_Engine_OnClientFrameStageNotify(curStage, true);
+
+	old_CS2_Client_FrameStageNotify(This, curStage);
+
+	AfxHookSource2Rs_Engine_OnClientFrameStageNotify(curStage, false);
+
+	AfxHookSource2Rs_Engine_RunJobQueue();
+}
+
+
+void CS2_HookClientDllInterface(void * iface)
+{
+	void ** vtable = *(void***)iface;
+
+	AfxDetourPtr((PVOID *)&(vtable[0]), new_CCS2_Client_Connect, (PVOID*)&old_CCS2_Client_Connect);
+	AfxDetourPtr((PVOID *)&(vtable[3]), new_CCS2_Client_Init, (PVOID*)&old_CCS2_Client_Init);
+	AfxDetourPtr((PVOID *)&(vtable[4]), new_CCS2_Client_Shutdown, (PVOID*)&old_CCS2_Client_Shutdown);
+	AfxDetourPtr((PVOID *)&(vtable[11]), new_CS2_Client_SetGlobals, (PVOID*)&old_CS2_Client_SetGlobals);
+	AfxDetourPtr((PVOID *)&(vtable[35]), new_CS2_Client_LevelInitPreEntity, (PVOID*)&old_CS2_Client_LevelInitPreEntity);
+	AfxDetourPtr((PVOID *)&(vtable[36]), new_CS2_Client_FrameStageNotify, (PVOID*)&old_CS2_Client_FrameStageNotify);
+}
+
+SOURCESDK::CreateInterfaceFn old_Client_CreateInterface = 0;
+
+void* new_Client_CreateInterface(const char *pName, int *pReturnCode)
+{
+	static bool bFirstCall = true;
+
+	void * pRet = old_Client_CreateInterface(pName, pReturnCode);
+
+	if(bFirstCall)
+	{
+		bFirstCall = false;
+
+		void * iface = NULL;
+		
+		if (iface = old_Client_CreateInterface(SOURCESDK_CS2_Source2Client_VERSION, NULL)) {
+			CS2_HookClientDllInterface(iface);
+		}
+		else
+		{
+			ErrorBox("Could not get a supported VClient interface.");
+		}
+	}
+
+	return pRet;
+}
+
+SOURCESDK::CreateInterfaceFn old_ResourceSystem_CreateInterface = 0;
+
+void* new_ResourceSystem_CreateInterface(const char *pName, int *pReturnCode)
+{
+	static bool bFirstCall = true;
+	void * pRet = old_ResourceSystem_CreateInterface (pName, pReturnCode);
+
+	if(bFirstCall)
+	{
+		bFirstCall = false;
+		if (!(g_pCResourceSystem = (CResourceSystem*)old_ResourceSystem_CreateInterface("ResourceSystem013", NULL))) ErrorBox("Could not get ResourceSystem013 interface.");
+	}
+
+	return pRet;
+}
+
+SOURCESDK::CreateInterfaceFn old_FileSystem_CreateInterface = 0;
+
+void* new_FileSystem_CreateInterface(const char *pName, int *pReturnCode)
+{
+	static bool bFirstCall = true;
+	void * pRet = old_FileSystem_CreateInterface (pName, pReturnCode);
+
+	if(bFirstCall)
+	{
+		bFirstCall = false;
+		if (!(g_pFileSystem = (SOURCESDK::CS2::IFileSystem*)old_FileSystem_CreateInterface("VFileSystem017", NULL))) ErrorBox("Could not get VFileSystem017 interface.");
+	}
+
+	return pRet;
+}
+
+FARPROC WINAPI new_tier0_GetProcAddress(HMODULE hModule, LPCSTR lpProcName)
+{
+	FARPROC nResult;
+	nResult = GetProcAddress(hModule, lpProcName);
+
+	if (!nResult)
+		return nResult;
+
+	if (HIWORD(lpProcName))
+	{
+		if (!lstrcmp(lpProcName, "GetProcAddress"))
+			return (FARPROC) &new_tier0_GetProcAddress;
+
+		if (
+			hModule == g_H_ClientDll
+			&& !lstrcmp(lpProcName, "CreateInterface")
+		) {
+			old_Client_CreateInterface = (SOURCESDK::CreateInterfaceFn)nResult;
+			return (FARPROC) &new_Client_CreateInterface;
+		}
+
+		if (
+			hModule == g_H_ResourceSystemDll
+			&& !lstrcmp(lpProcName, "CreateInterface")
+		) {
+			old_ResourceSystem_CreateInterface = (SOURCESDK::CreateInterfaceFn)nResult;
+			return (FARPROC) &new_ResourceSystem_CreateInterface;
+		}
+
+		if (
+			hModule == g_H_FileSystem_stdio
+			&& !lstrcmp(lpProcName, "CreateInterface")
+		) {
+			old_FileSystem_CreateInterface = (SOURCESDK::CreateInterfaceFn)nResult;
+			return (FARPROC) &new_FileSystem_CreateInterface;
+		}
+	}
+
+	return nResult;
+}
+
+HMODULE WINAPI new_LoadLibraryA(LPCSTR lpLibFileName);
+HMODULE WINAPI new_LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
+HMODULE WINAPI new_LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags);
+
+HANDLE
+WINAPI
+new_CreateFileW(
+	_In_ LPCWSTR lpFileName,
+	_In_ DWORD dwDesiredAccess,
+	_In_ DWORD dwShareMode,
+	_In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	_In_ DWORD dwCreationDisposition,
+	_In_ DWORD dwFlagsAndAttributes,
+	_In_opt_ HANDLE hTemplateFile
+);
+
+BOOL
+WINAPI
+new_CreateDirectoryW(
+    _In_ LPCWSTR lpPathName,
+    _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes
+    );
+
+BOOL
+WINAPI
+new_GetFileAttributesExW(
+    _In_ LPCWSTR lpFileName,
+    _In_ GET_FILEEX_INFO_LEVELS fInfoLevelId,
+    _Out_writes_bytes_(sizeof(WIN32_FILE_ATTRIBUTE_DATA)) LPVOID lpFileInformation
+    );
+
+CAfxImportFuncHook<HMODULE(WINAPI*)(LPCSTR, HANDLE, DWORD)> g_Import_tier0_KERNEL32_LoadLibraryExA("LoadLibraryExA", &new_LoadLibraryExA);
+CAfxImportFuncHook<HMODULE(WINAPI*)(LPCWSTR, HANDLE, DWORD)> g_Import_tier0_KERNEL32_LoadLibraryExW("LoadLibraryExW", &new_LoadLibraryExW);
+CAfxImportFuncHook<FARPROC(WINAPI*)(HMODULE, LPCSTR)> g_Import_tier0_KERNEL32_GetProcAddress("GetProcAddress", &new_tier0_GetProcAddress);
+CAfxImportFuncHook<HANDLE(WINAPI*)(LPCWSTR, DWORD, DWORD, LPSECURITY_ATTRIBUTES, DWORD, DWORD, HANDLE)> g_Import_tier0_KERNEL32_CreateFileW("CreateFileW", &new_CreateFileW);
+CAfxImportFuncHook<BOOL(WINAPI*)(LPCWSTR, LPSECURITY_ATTRIBUTES)> g_Import_tier0_KERNEL32_CreateDirectoryW("CreateDirectoryW", &new_CreateDirectoryW);
+CAfxImportFuncHook<BOOL(WINAPI*)(LPCWSTR, GET_FILEEX_INFO_LEVELS, LPVOID)> g_Import_tier0_KERNEL32_GetFileAttributesExW("GetFileAttributesExW", &new_GetFileAttributesExW);
+
+HANDLE WINAPI new_CreateFileW(
+	_In_ LPCWSTR lpFileName,
+	_In_ DWORD dwDesiredAccess,
+	_In_ DWORD dwShareMode,
+	_In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes,
+	_In_ DWORD dwCreationDisposition,
+	_In_ DWORD dwFlagsAndAttributes,
+	_In_opt_ HANDLE hTemplateFile
+)
+{
+	static bool bWasRecording = false; // allow startmovie wav-fixup by engine to get through one more time.
+	if (AfxStreams_IsRcording() || bWasRecording) {
+		std::wstring strFileName(lpFileName);
+		for (auto& c : strFileName) c = std::tolower(c);
+		if (StringEndsWithW(strFileName.c_str(), L"" ADVANCEDFX_STARTMOVIE_WAV_KEY ".wav")) {
+			// Detours our wav to our folder.			
+			bWasRecording = AfxStreams_IsRcording();
+			std::wstring newPath(AfxStreams_GetTakeDir());
+			newPath.append(L"\\audio.wav");
+			return g_Import_tier0_KERNEL32_CreateFileW.TrueFunc(newPath.c_str(), dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+		}
+	}
+	return g_Import_tier0_KERNEL32_CreateFileW.TrueFunc(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
+}
+
+BOOL
+WINAPI
+new_CreateDirectoryW(
+    _In_ LPCWSTR lpPathName,
+    _In_opt_ LPSECURITY_ATTRIBUTES lpSecurityAttributes
+    ) {
+
+	if (AfxStreams_IsRcording()) {
+		// Do not create dummy movie folders while recording startmovie wav.
+		std::wstring strMovieFolder(L"\\\\?\\");
+		strMovieFolder.append(GetProcessFolderW());
+		strMovieFolder.append(L"csgo\\movie\\");
+		if(StringBeginsWithW(lpPathName,strMovieFolder.c_str())) return TRUE;
+	}
+
+	return g_Import_tier0_KERNEL32_CreateDirectoryW.TrueFunc(lpPathName,lpSecurityAttributes);
+}
+
+BOOL
+WINAPI
+new_GetFileAttributesExW(
+    _In_ LPCWSTR lpFileName,
+    _In_ GET_FILEEX_INFO_LEVELS fInfoLevelId,
+    _Out_writes_bytes_(sizeof(WIN32_FILE_ATTRIBUTE_DATA)) LPVOID lpFileInformation
+    ) {
+
+	if (AfxStreams_IsRcording()) {
+		std::wstring strFileName(lpFileName);
+		for (auto& c : strFileName) c = std::tolower(c);
+		if (StringEndsWithW(strFileName.c_str(), L"" ADVANCEDFX_STARTMOVIE_WAV_KEY ".wav")) {
+			// Detours our wav to our folder.			
+			std::wstring newPath(AfxStreams_GetTakeDir());
+			newPath.append(L"\\audio.wav");
+			return g_Import_tier0_KERNEL32_GetFileAttributesExW.TrueFunc(newPath.c_str(),fInfoLevelId,lpFileInformation);
+		}
+	}
+
+	return g_Import_tier0_KERNEL32_GetFileAttributesExW.TrueFunc(lpFileName,fInfoLevelId,lpFileInformation);
+}
+
+
+CAfxImportDllHook g_Import_tier0_KERNEL32("KERNEL32.dll", CAfxImportDllHooks({
+	&g_Import_tier0_KERNEL32_LoadLibraryExA
+	, &g_Import_tier0_KERNEL32_LoadLibraryExW
+	, &g_Import_tier0_KERNEL32_GetProcAddress
+	, &g_Import_tier0_KERNEL32_CreateFileW
+	, &g_Import_tier0_KERNEL32_CreateDirectoryW
+	, &g_Import_tier0_KERNEL32_GetFileAttributesExW}));
+
+CAfxImportsHook g_Import_tier0(CAfxImportsHooks({
+	&g_Import_tier0_KERNEL32 }));
+
+void CommonHooks()
+{
+	static bool bFirstRun = true;
+	static bool bFirstTier0 = true;
+
+	// do not use messageboxes here, there is some friggin hooking going on in between by the
+	// Source engine.
+
+	if (bFirstRun)
+	{
+		bFirstRun = false;
+	}
+}
+
+CAfxImportFuncHook<HMODULE (WINAPI *)(LPCSTR)> g_Import_launcher_KERNEL32_LoadLibraryA("LoadLibraryA", &new_LoadLibraryA);
+CAfxImportFuncHook<HMODULE (WINAPI *)(LPCSTR, HANDLE, DWORD)> g_Import_launcher_KERNEL32_LoadLibraryExA("LoadLibraryExA", &new_LoadLibraryExA);
+
+CAfxImportDllHook g_Import_launcher_KERNEL32("KERNEL32.dll", CAfxImportDllHooks({
+	&g_Import_launcher_KERNEL32_LoadLibraryA
+	, &g_Import_launcher_KERNEL32_LoadLibraryExA }));
+
+CAfxImportsHook g_Import_launcher(CAfxImportsHooks({
+	&g_Import_launcher_KERNEL32 }));
+
+CAfxImportFuncHook<HMODULE(WINAPI*)(LPCSTR)> g_Import_filesystem_steam_KERNEL32_LoadLibraryA("LoadLibraryA", &new_LoadLibraryA);
+CAfxImportFuncHook<HMODULE(WINAPI*)(LPCSTR, HANDLE, DWORD)> g_Import_filesystem_steam_KERNEL32_LoadLibraryExA("LoadLibraryExA", &new_LoadLibraryExA);
+
+CAfxImportDllHook g_Import_filesystem_steam_KERNEL32("KERNEL32.dll", CAfxImportDllHooks({
+	&g_Import_filesystem_steam_KERNEL32_LoadLibraryA
+	, &g_Import_filesystem_steam_KERNEL32_LoadLibraryExA }));
+
+CAfxImportsHook g_Import_filesystem_steam(CAfxImportsHooks({
+	&g_Import_filesystem_steam_KERNEL32 }));
+
+
+//CAfxImportFuncHook<HMODULE(WINAPI*)(LPCSTR)> g_Import_engine2_KERNEL32_LoadLibraryA("LoadLibraryA", &new_LoadLibraryA);
+//CAfxImportFuncHook<HMODULE(WINAPI*)(LPCSTR, HANDLE, DWORD)> g_Import_engine2_KERNEL32_LoadLibraryExA("LoadLibraryExA", &new_LoadLibraryExA);
+
+//CAfxImportDllHook g_Import_engine2_KERNEL32("KERNEL32.dll", CAfxImportDllHooks({
+//	&g_Import_engine2_KERNEL32_LoadLibraryA
+//	, &g_Import_engine2_KERNEL32_LoadLibraryExA }));
+
+void * New_SteamInternal_FindOrCreateUserInterface(void*pUser, const char * pIntervaceName);
+
+CAfxImportFuncHook<void*(*)(void *, const char *)> g_Import_engine2_steam_api64_SteamInternal_FindOrCreateUserInterface("SteamInternal_FindOrCreateUserInterface", &New_SteamInternal_FindOrCreateUserInterface);
+
+void * New_SteamInternal_FindOrCreateUserInterface(void*pUser, const char * pInterfaceName) {
+	if(0 == strcmp(pInterfaceName,"STEAMREMOTESTORAGE_INTERFACE_VERSION016")) {
+		if (int idx = g_CommandLine->FindParam(L"-afxDisableSteamStorage")) {
+			return nullptr;
+		}
+	}
+	
+	return g_Import_engine2_steam_api64_SteamInternal_FindOrCreateUserInterface.GetTrueFuncValue()(pUser,pInterfaceName);
+}
+
+CAfxImportDllHook g_Import_engine2_steam_api64("steam_api64.dll", CAfxImportDllHooks({
+	&g_Import_engine2_steam_api64_SteamInternal_FindOrCreateUserInterface }));
+
+CAfxImportsHook g_Import_engine2(CAfxImportsHooks({
+	//&g_Import_engine2_KERNEL32,
+	&g_Import_engine2_steam_api64 }));
+
+CAfxImportFuncHook<HMODULE(WINAPI*)(LPCSTR)> g_Import_materialsystem2_KERNEL32_LoadLibraryA("LoadLibraryA", &new_LoadLibraryA);
+CAfxImportFuncHook<HMODULE(WINAPI*)(LPCSTR, HANDLE, DWORD)> g_Import_materialsystem2_KERNEL32_LoadLibraryExA("LoadLibraryExA", &new_LoadLibraryExA);
+
+CAfxImportDllHook g_Import_materialsystem2_KERNEL32("KERNEL32.dll", CAfxImportDllHooks({
+	&g_Import_materialsystem2_KERNEL32_LoadLibraryA
+	, &g_Import_materialsystem2_KERNEL32_LoadLibraryExA }));
+
+CAfxImportsHook g_Import_materialsystem2(CAfxImportsHooks({
+	&g_Import_materialsystem2_KERNEL32 }));
+
+
+CAfxImportFuncHook<LONG_PTR(WINAPI*)(HWND, int)> g_Import_SDL3_USER32_GetWindowLongW("GetWindowLongPtrW", &new_GetWindowLongPtrW);
+CAfxImportFuncHook<LONG_PTR(WINAPI*)(HWND, int, LONG_PTR)> g_Import_SDL3_USER32_SetWindowLongW("SetWindowLongPtrW", &new_SetWindowLongPtrW);
+CAfxImportFuncHook<HCURSOR(WINAPI*)(HCURSOR)> g_Import_SDL3_USER32_SetCursor("SetCursor", &new_SetCursor);
+CAfxImportFuncHook<HWND(WINAPI*)(HWND)> g_Import_SDL3_USER32_SetCapture("SetCapture", &new_SetCapture);
+CAfxImportFuncHook<BOOL(WINAPI*)()> g_Import_SDL3_USER32_ReleaseCapture("ReleaseCapture", &new_ReleaseCapture);
+CAfxImportFuncHook<BOOL(WINAPI*)(LPPOINT)> g_Import_SDL3_USER32_GetCursorPos("GetCursorPos", &new_GetCursorPos);
+CAfxImportFuncHook<BOOL(WINAPI*)(int, int)> g_Import_SDL3_USER32_SetCursorPos("SetCursorPos", &new_SetCursorPos);
+
+
+UINT
+WINAPI
+New_GetRawInputBuffer(
+    _Out_writes_bytes_opt_(*pcbSize) PRAWINPUT pData,
+    _Inout_ PUINT pcbSize,
+    _In_ UINT cbSizeHeader);
+
+CAfxImportFuncHook<UINT(WINAPI*)(_Out_writes_bytes_opt_(*pcbSize) PRAWINPUT, _Inout_ PUINT, _In_ UINT cbSizeHeader)> g_Import_SDL3_USER32_GetRawInputBuffer("GetRawInputBuffer", &New_GetRawInputBuffer);
+
+UINT
+WINAPI
+New_GetRawInputBuffer(
+    _Out_writes_bytes_opt_(*pcbSize) PRAWINPUT pData,
+    _Inout_ PUINT pcbSize,
+    _In_ UINT cbSizeHeader) {
+	UINT result = g_Import_SDL3_USER32_GetRawInputBuffer.GetTrueFuncValue()(pData,pcbSize,cbSizeHeader);
+
+	result = g_MirvInputEx.m_MirvInput->Supply_RawInputBuffer(result, pData,pcbSize,cbSizeHeader);
+
+	return result;
+
+}
+
+
+UINT WINAPI New_GetRawInputData(
+    _In_ HRAWINPUT hRawInput,
+    _In_ UINT uiCommand,
+    _Out_writes_bytes_to_opt_(*pcbSize, return) LPVOID pData,
+    _Inout_ PUINT pcbSize,
+    _In_ UINT cbSizeHeader);
+
+CAfxImportFuncHook<UINT(WINAPI*)(_In_ HRAWINPUT, _In_ UINT, _Out_writes_bytes_to_opt_(*pcbSize, return) LPVOID pData,_Inout_ PUINT,_In_ UINT)> g_Import_SDL3_USER32_GetRawInputData("GetRawInputData", &New_GetRawInputData);
+
+UINT WINAPI New_GetRawInputData(
+    _In_ HRAWINPUT hRawInput,
+    _In_ UINT uiCommand,
+    _Out_writes_bytes_to_opt_(*pcbSize, return) LPVOID pData,
+    _Inout_ PUINT pcbSize,
+    _In_ UINT cbSizeHeader) {
+
+	UINT result = g_Import_SDL3_USER32_GetRawInputData.GetTrueFuncValue()(hRawInput,uiCommand,pData,pcbSize,cbSizeHeader);
+
+	result = g_MirvInputEx.m_MirvInput->Supply_RawInputData(result, hRawInput, uiCommand,pData,pcbSize,cbSizeHeader);
+
+	return result;
+}
+
+
+CAfxImportDllHook g_Import_SDL3_USER32("USER32.dll", CAfxImportDllHooks({
+	&g_Import_SDL3_USER32_GetWindowLongW,
+	&g_Import_SDL3_USER32_SetWindowLongW,
+	&g_Import_SDL3_USER32_SetCursor,
+	&g_Import_SDL3_USER32_SetCapture,
+	&g_Import_SDL3_USER32_ReleaseCapture,
+	&g_Import_SDL3_USER32_GetCursorPos,
+	&g_Import_SDL3_USER32_SetCursorPos,
+	&g_Import_SDL3_USER32_GetRawInputData,
+	&g_Import_SDL3_USER32_GetRawInputBuffer }));
+
+CAfxImportsHook g_Import_SDL3(CAfxImportsHooks({
+	&g_Import_SDL3_USER32 }));
+
+CAfxImportFuncHook<LONG_PTR(WINAPI*)(HWND, int)> g_Import_inputsystem_USER32_GetWindowLongW("GetWindowLongPtrW", &new_GetWindowLongPtrW);
+CAfxImportFuncHook<LONG_PTR(WINAPI*)(HWND, int, LONG_PTR)> g_Import_inputsystem_USER32_SetWindowLongW("SetWindowLongPtrW", &new_SetWindowLongPtrW);
+CAfxImportFuncHook<HCURSOR(WINAPI*)(HCURSOR)> g_Import_inputsystem_USER32_SetCursor("SetCursor", &new_SetCursor);
+CAfxImportFuncHook<HWND(WINAPI*)(HWND)> g_Import_inputsystem_USER32_SetCapture("SetCapture", &new_SetCapture);
+CAfxImportFuncHook<BOOL(WINAPI*)()> g_Import_inputsystem_USER32_ReleaseCapture("ReleaseCapture", &new_ReleaseCapture);
+CAfxImportFuncHook<BOOL(WINAPI*)(LPPOINT)> g_Import_inputsystem_USER32_GetCursorPos("GetCursorPos", &new_GetCursorPos);
+CAfxImportFuncHook<BOOL(WINAPI*)(int, int)> g_Import_inputsystem_USER32_SetCursorPos("SetCursorPos", &new_SetCursorPos);
+
+CAfxImportDllHook g_Import_inputsystem_USER32("USER32.dll", CAfxImportDllHooks({
+	&g_Import_inputsystem_USER32_GetWindowLongW,
+	&g_Import_inputsystem_USER32_SetWindowLongW,
+	&g_Import_inputsystem_USER32_SetCursor,
+	&g_Import_inputsystem_USER32_SetCapture,
+	&g_Import_inputsystem_USER32_ReleaseCapture,
+	&g_Import_inputsystem_USER32_GetCursorPos,
+	&g_Import_inputsystem_USER32_SetCursorPos }));
+
+CAfxImportsHook g_Import_inputsystem(CAfxImportsHooks({
+	&g_Import_inputsystem_USER32 }));
+
+//CAfxImportDllHook g_Import_client_steam_api64("steam_api64.dll", CAfxImportDllHooks({
+//	&g_Import_client_steam_api64_SteamInternal_FindOrCreateUserInterface }));
+//
+//CAfxImportsHook g_Import_client(CAfxImportsHooks({
+//&g_Import_client_steam_api64 }));
+
+void LibraryHooksA(HMODULE hModule, LPCSTR lpLibFileName)
+{
+	CommonHooks();
+
+	if(!hModule || !lpLibFileName)
+		return;
+
+#if 0
+	static FILE *f1=NULL;
+
+	if( !f1 ) f1=fopen("hlae_log_LibraryHooksA.txt","wb");
+	fprintf(f1,"%s\n", lpLibFileName);
+	fflush(f1);
+#endif
+}
+
+advancedfx::Con_Printf_t Tier0_Message = nullptr;
+advancedfx::Con_Printf_t Tier0_Warning = nullptr;
+advancedfx::Con_DevPrintf_t Tier0_DevMessage = nullptr;
+advancedfx::Con_DevPrintf_t Tier0_DevWarning = nullptr;
+
+class CConsolePrint_Message : public IConsolePrint {
+public:
+	virtual void Print(const char * text) {
+		Tier0_Message("%s", text);
+	}
+};
+
+class CConsolePrint_Warning : public IConsolePrint {
+public:
+	virtual void Print(const char * text) {
+		Tier0_Warning("%s", text);
+	}
+};
+
+class CConsolePrint_DevMessage : public IConsolePrint {
+public:
+	CConsolePrint_DevMessage(int level)
+	: m_Level(level) {
+
+	}
+
+	virtual void Print(const char * text) {
+		Tier0_DevMessage(m_Level, "%s", text);
+	}
+private:
+	int m_Level;
+};
+
+class CConsolePrint_DevWarning : public IConsolePrint {
+public:
+	CConsolePrint_DevWarning(int level)
+	: m_Level(level) {
+
+	}
+
+	virtual void Print(const char * text) {
+		Tier0_DevWarning(m_Level, "%s", text);
+	}
+private:
+	int m_Level;
+};
+
+CConsolePrinter * g_ConsolePrinter = nullptr;
+
+void My_Console_Message(const char* fmt, ...) {
+	CConsolePrint_Message consolePrint;
+	va_list args;
+	va_start(args, fmt);
+	g_ConsolePrinter->Print(&consolePrint, fmt, args);
+	va_end(args);
+}
+
+void My_Console_Warning(const char* fmt, ...) {
+	CConsolePrint_Warning consolePrint;
+	va_list args;
+	va_start(args, fmt);
+	g_ConsolePrinter->Print(&consolePrint, fmt, args);
+	va_end(args);
+}
+
+void My_Console_DevMessage(int level, const char* fmt, ...) {
+	CConsolePrint_DevMessage consolePrint(level);
+	va_list args;
+	va_start(args, fmt);
+	g_ConsolePrinter->Print(&consolePrint, fmt, args);
+	va_end(args);
+}
+
+void My_Console_DevWarning(int level, const char* fmt, ...) {
+	CConsolePrint_DevWarning consolePrint(level);
+	va_list args;
+	va_start(args, fmt);
+	g_ConsolePrinter->Print(&consolePrint, fmt, args);
+	va_end(args);
+}
+
+void LibraryHooksW(HMODULE hModule, LPCWSTR lpLibFileName)
+{
+	static bool bFirstTier0 = true;
+	static bool bFirstClient = true;
+	static bool bFirstEngine2 = true;
+	static bool bFirstfilesystem_stdio = true;
+	static bool bFirstMaterialsystem2 = true;
+	static bool bFirstInputsystem = true;
+	static bool bFirstSDL3 = true;
+	static bool bFirstRenderSystemDX11 = true;
+	static bool bFirstPanorama = true;
+	static bool bFirstSchemaSystem = true;
+	static bool bFirstSceneSystem = true;
+	static bool bFirstResourceSystem = true;
+	
+	CommonHooks();
+
+	if (!hModule || !lpLibFileName)
+		return;
+
+#if 0
+	static FILE *f1 = NULL;
+
+	if (!f1) f1 = fopen("hlae_log_LibraryHooksW.txt", "wb");
+	fwprintf(f1, L"%s\n", lpLibFileName);
+	fflush(f1);
+#endif
+
+
+	if(bFirstTier0 && StringEndsWithW( lpLibFileName, L"tier0.dll"))
+	{
+		bFirstTier0 = false;
+		
+		g_Import_tier0.Apply(hModule);
+
+		SOURCESDK::CS2::g_pMemAlloc = *(SOURCESDK::CS2::IMemAlloc **)GetProcAddress(hModule, "g_pMemAlloc");
+
+		if(Tier0_Message = (Tier0MsgFn)GetProcAddress(hModule, "Msg"))
+			advancedfx::Message = My_Console_Message;
+		else
+			ErrorBox(MkErrStr(__FILE__, __LINE__));
+		if(Tier0_Warning = (Tier0MsgFn)GetProcAddress(hModule, "Warning"))
+			advancedfx::Warning = My_Console_Warning;
+		else
+			ErrorBox(MkErrStr(__FILE__, __LINE__));
+		if(Tier0_DevMessage = (Tier0DevMsgFn)GetProcAddress(hModule, "DevMsg"))
+			advancedfx::DevMessage = My_Console_DevMessage;
+		else
+			ErrorBox(MkErrStr(__FILE__, __LINE__));
+		if(Tier0_DevWarning = (Tier0DevMsgFn)GetProcAddress(hModule, "DevWarning"))
+			advancedfx::DevWarning = My_Console_DevWarning;
+		else
+			ErrorBox(MkErrStr(__FILE__, __LINE__));
+	}
+	else if(bFirstfilesystem_stdio && StringEndsWithW( lpLibFileName, L"filesystem_stdio.dll"))
+	{
+		bFirstfilesystem_stdio = false;
+
+		g_H_FileSystem_stdio = hModule;
+
+		org_AddSearchPath = (AddSearchPath_t)getVTableFn(hModule, 31, ".?AVCFileSystem_Stdio@@");
+		if (0 == org_AddSearchPath) ErrorBox(MkErrStr(__FILE__, __LINE__));
+
+		DetourTransactionBegin();
+		DetourUpdateThread(GetCurrentThread());
+		
+		DetourAttach(&(PVOID&)org_AddSearchPath, new_AddSearchPath);
+		
+		if(NO_ERROR != DetourTransactionCommit()) ErrorBox("Failed to detour filesystem_stdio functions.");
+		
+		// g_Import_filesystem_stdio.Apply(hModule);
+	}
+	else if(bFirstInputsystem && StringEndsWithW(lpLibFileName, L"inputsystem.dll"))
+	{
+		bFirstInputsystem = false;
+
+		g_Import_inputsystem.Apply(hModule);
+	}	
+	else if(bFirstSDL3 && StringEndsWithW(lpLibFileName, L"SDL3.dll"))
+	{
+		bFirstSDL3 = false;
+
+		g_Import_SDL3.Apply(hModule);
+	}
+	else if(bFirstEngine2 && StringEndsWithW( lpLibFileName, L"engine2.dll"))
+	{
+		bFirstEngine2 = false;
+
+		g_h_engine2Dll = hModule;
+
+		Addresses_InitEngine2Dll((AfxAddr)hModule);
+
+		HookEngineDll(hModule);
+
+		g_Import_engine2.Apply(hModule);
+
+		Hook_Engine_RenderService();
+
+		Hook_Engine__HostStateRequest_Start();
+	}
+	else if(bFirstSceneSystem && StringEndsWithW( lpLibFileName, L"scenesystem.dll"))
+	{
+		bFirstSceneSystem = false;
+
+		Addresses_InitSceneSystemDll((AfxAddr)hModule);
+
+		g_Import_SceneSystem.Apply(hModule);
+		Hook_SceneSystem(hModule);
+		HookSceneSystem(hModule);
+	}
+	else if(bFirstMaterialsystem2 && StringEndsWithW( lpLibFileName, L"materialsystem2.dll"))
+	{
+		bFirstMaterialsystem2 = false;
+
+		HookMaterialSystem(hModule);
+
+		// g_Import_materialsystem2.Apply(hModule);
+	}
+	else if(bFirstRenderSystemDX11 && StringEndsWithW( lpLibFileName, L"rendersystemdx11.dll"))
+	{
+		bFirstRenderSystemDX11 = false;
+
+		Hook_RenderSystemDX11((void*)hModule);
+	}
+	else if(bFirstClient && StringEndsWithW(lpLibFileName, L"csgo\\bin\\win64\\client.dll"))
+	{
+		bFirstClient = false;
+
+		g_H_ClientDll = hModule;
+
+		Addresses_InitClientDll((AfxAddr)hModule);
+
+		//if(!g_Import_client.Apply(hModule)) ErrorBox("client.dll steam_api64 hooks failed.");
+
+		HookMirvColors(hModule);
+
+		HookMirvCommands(hModule);
+
+		HookViewmodel(hModule);
+
+		HookDeathMsg(hModule);
+
+		HookReplaceName(hModule);
+
+		HookClientDll(hModule);
+
+		Hook_ClientEntitySystem3(hModule);
+	} 
+	else if(bFirstPanorama && StringEndsWithW(lpLibFileName, L"panorama.dll"))
+	{
+		bFirstPanorama = false;
+		g_Import_panorama.Apply(hModule);
+		HookPanorama(hModule);
+	}
+	else if(bFirstSchemaSystem && StringEndsWithW(lpLibFileName, L"schemasystem.dll"))
+	{
+		bFirstSchemaSystem = false;
+		g_H_SchemaSystem = hModule;
+	}
+	else if(bFirstResourceSystem && StringEndsWithW(lpLibFileName, L"resourcesystem.dll"))
+	{
+		bFirstResourceSystem = false;
+		g_H_ResourceSystemDll = hModule;
+	}
+}
+
+HMODULE WINAPI new_LoadLibraryA( LPCSTR lpLibFileName ) {
+	HMODULE hRet = LoadLibraryA(lpLibFileName);
+
+	LibraryHooksA(hRet, lpLibFileName);
+
+	return hRet;
+}
+
+HMODULE WINAPI new_LoadLibraryExA(LPCSTR lpLibFileName, HANDLE hFile, DWORD dwFlags) {
+	HMODULE hRet = LoadLibraryExA(lpLibFileName, hFile, dwFlags);
+
+	LibraryHooksA(hRet, lpLibFileName);
+
+	return hRet;
+}
+
+HMODULE WINAPI new_LoadLibraryExW(LPCWSTR lpLibFileName, HANDLE hFile, DWORD dwFlags) {
+	HMODULE hRet = LoadLibraryExW(lpLibFileName, hFile, dwFlags);
+
+	LibraryHooksW(hRet, lpLibFileName);
+
+	return hRet;
+}
+
+CAfxImportFuncHook<HMODULE(WINAPI*)(LPCSTR)> g_Import_PROCESS_KERNEL32_LoadLibraryA("LoadLibraryA", &new_LoadLibraryA);
+CAfxImportFuncHook<HMODULE(WINAPI*)(LPCSTR, HANDLE, DWORD)> g_Import_PROCESS_KERNEL32_LoadLibraryExA("LoadLibraryExA", &new_LoadLibraryExA);
+CAfxImportFuncHook<HMODULE(WINAPI*)(LPCWSTR, HANDLE, DWORD)> g_Import_PROCESS_KERNEL32_LoadLibraryExW("LoadLibraryExW", &new_LoadLibraryExW);
+
+CAfxImportDllHook g_Import_PROCESS_KERNEL32("KERNEL32.dll", CAfxImportDllHooks({
+	&g_Import_PROCESS_KERNEL32_LoadLibraryA
+	, &g_Import_PROCESS_KERNEL32_LoadLibraryExA
+	, &g_Import_PROCESS_KERNEL32_LoadLibraryExW }));
+
+CAfxImportsHook g_Import_PROCESS(CAfxImportsHooks({
+	&g_Import_PROCESS_KERNEL32 }));
+
+
+advancedfx::CThreadPool * g_pThreadPool = nullptr;
+advancedfx::CGrowingBufferPoolThreadSafe * g_pImageBufferPoolThreadSafe = nullptr;
+
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpReserved)
+{
+	switch (fdwReason) 
+	{ 
+		case DLL_PROCESS_ATTACH:
+		{
+			g_CommandLine = new advancedfx::CCommandLine();
+
+			if(!g_CommandLine->FindParam(L"-insecure"))
+			{
+				ErrorBox("Please add -insecure to launch options, AfxHookSource2 will refuse to work without it!");
+
+				HANDLE hproc = OpenProcess(PROCESS_TERMINATE, true, GetCurrentProcessId());
+				TerminateProcess(hproc, 0);
+				CloseHandle(hproc);
+				
+				do MessageBoxA(NULL, "Please terminate the game manually in the taskmanager!", "Cannot terminate, please help:", MB_OK | MB_ICONERROR);
+				while (true);
+			}
+
+#if _DEBUG
+			MessageBox(0,"DLL_PROCESS_ATTACH","MDT_DEBUG",MB_OK);
+#endif
+			g_Import_PROCESS.Apply(GetModuleHandle(NULL));
+
+			if (!(g_Import_PROCESS_KERNEL32_LoadLibraryA.TrueFunc || g_Import_PROCESS_KERNEL32_LoadLibraryExA.TrueFunc || g_Import_PROCESS_KERNEL32_LoadLibraryExW.TrueFunc))
+				ErrorBox();
+
+			//
+			// Remember we are not on the main program thread here,
+			// instead we are on our own thread, so don't run
+			// things here that would have problems with that.
+			//
+
+			size_t thread_pool_thread_count = advancedfx::CThreadPool::GetDefaultThreadCount();
+			if (int idx = g_CommandLine->FindParam(L"-afxThreadPoolSize")) {
+				if (idx + 1 < g_CommandLine->GetArgC()) {
+					thread_pool_thread_count = (size_t)wcstoul( g_CommandLine->GetArgV(idx + 1), nullptr, 10);
+				}
+			}
+			g_pThreadPool = new advancedfx::CThreadPool(thread_pool_thread_count);
+
+			g_pImageBufferPoolThreadSafe = new advancedfx::CGrowingBufferPoolThreadSafe();
+
+			g_ConsolePrinter = new CConsolePrinter();
+
+			g_CampathDrawer.Begin();
+
+			if (int idx = g_CommandLine->FindParam(L"-afxFixNetCon")) {
+				// https://github.com/ValveSoftware/csgo-osx-linux/issues/3603#issuecomment-2163695087
+
+				WORD wVersionRequested;
+    			WSADATA wsaData;
+    			int err;
+
+				wVersionRequested = MAKEWORD(2, 0);
+
+				err = WSAStartup(wVersionRequested, &wsaData);
+    			if (err != 0) {
+					ErrorBox("WSAStartup failed");
+			    }
+			
+			    if (LOBYTE(wsaData.wVersion) != 2 || HIBYTE(wsaData.wVersion) != 0) {
+			        ErrorBox("Could not find a usable version of Winsock.dll");
+        			WSACleanup();
+				}		
+			}
+
+			break;
+		}
+		case DLL_PROCESS_DETACH:
+		{
+			// actually this gets called now.
+
+			g_CampathDrawer.End();
+
+			g_S2CamIO.ShutDown();
+
+			delete g_ConsolePrinter;
+
+			delete g_pImageBufferPoolThreadSafe;
+
+			delete g_pThreadPool;
+
+#ifdef _DEBUG
+			_CrtDumpMemoryLeaks();
+#endif
+
+			break;
+		}
+		case DLL_THREAD_ATTACH:
+		{
+			break;
+		}
+		case DLL_THREAD_DETACH:
+		{
+			break;
+		}
+	}
+	return TRUE;
+}

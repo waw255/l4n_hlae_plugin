@@ -1,0 +1,6 @@
+[HLAE]
+; Root of the packaged HLAE runtime resources.
+; Relative paths are resolved from the folder containing this INI file.
+; The plugin is installed at bin/neko/plugins and the core at the game root.
+; Three parent folders reach the game root from the plugin directory.
+HlaeRoot=..\..\..\l4n_hlae_core

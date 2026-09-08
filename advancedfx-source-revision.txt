@@ -1,0 +1,6 @@
+HLAE source repository: https://github.com/advancedfx/advancedfx.git
+HLAE source commit: 03f972b4710ab9a8b1601fc0c34ce33c9c0268cc
+
+Submodules were initialized at the commits recorded by the HLAE source
+repository. The vendored source is kept under advancedfx/ and the top-level
+l4n_hlae_plugin repository is the only Git repository for this project.

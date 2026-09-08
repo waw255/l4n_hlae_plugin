@@ -1,0 +1,1194 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR advancedfx.org
+# This file is distributed under the same license as the hlae package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: hlae\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2025-09-16 02:56+0400\n"
+"PO-Revision-Date: 2020-08-04 20:08+0000\n"
+"Last-Translator: Dominik <dominik@matrixstorm.com>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: ja\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Pontoon\n"
+
+#: AfxError.cs:11
+msgid "AfxError"
+msgstr "AfxError"
+
+#: AfxError.cs:40
+#, csharp-format
+msgctxt "AfxError (number code)"
+msgid "AfxError #{0}: "
+msgstr "AfxError #{0}: "
+
+#: AfxError.cs:41
+#, csharp-format
+msgctxt "AfxError"
+msgid "Title: {0}"
+msgstr "タイトル: {0}"
+
+#: AfxError.cs:42
+#, csharp-format
+msgctxt "AfxError"
+msgid "Description: {0}"
+msgstr "詳細: {0}"
+
+#: AfxError.cs:43
+#, csharp-format
+msgctxt "AfxError"
+msgid "Solution: {0}"
+msgstr "解決方法: {0}"
+
+#: AfxError.cs:44
+#, csharp-format
+msgctxt "AfxError"
+msgid "Inner exception: {0}"
+msgstr "内部例外: {0}"
+
+#: AfxRgbaLutVoronoiGenerator.cs:19
+msgid "Voronoi Color Lookup Table"
+msgstr ""
+
+#: AfxRgbaLutVoronoiGenerator.cs:20
+#, fuzzy
+msgid "Color map"
+msgstr "色深度:"
+
+#: AfxRgbaLutVoronoiGenerator.cs:21 AfxRgbaLutVoronoiGenerator.cs:33
+msgid "Generate"
+msgstr "生成"
+
+#: AfxRgbaLutVoronoiGenerator.cs:22
+msgid "Check"
+msgstr "今すぐ確認する"
+
+#: AfxRgbaLutVoronoiGenerator.cs:23
+msgid "Copy all to clipboard"
+msgstr "クリップボードにコピー"
+
+#: AfxRgbaLutVoronoiGenerator.cs:24
+msgid "Paste all from clipboard"
+msgstr "クリップボードより全て張り付け"
+
+#: AfxRgbaLutVoronoiGenerator.cs:25
+msgctxt "Number/Key"
+msgid "Index"
+msgstr "インデックス"
+
+#: AfxRgbaLutVoronoiGenerator.cs:26
+msgid "Comment"
+msgstr "コメント"
+
+#: AfxRgbaLutVoronoiGenerator.cs:27
+#, fuzzy
+msgid "Weight"
+msgstr "縦:"
+
+#: AfxRgbaLutVoronoiGenerator.cs:28
+#, fuzzy
+msgctxt "image"
+msgid "Resolution"
+msgstr "解決方法:"
+
+#: AfxRgbaLutVoronoiGenerator.cs:29
+msgctxt "image"
+msgid "Memory estimate (Bytes):"
+msgstr ""
+
+#: AfxRgbaLutVoronoiGenerator.cs:30
+msgid "Preview"
+msgstr "プレビュー"
+
+#: AfxRgbaLutVoronoiGenerator.cs:31
+msgid "Horizontal:"
+msgstr "水平"
+
+#: AfxRgbaLutVoronoiGenerator.cs:32
+msgid "Vertical:"
+msgstr "水平"
+
+#: AfxRgbaLutVoronoiGenerator.cs:34
+msgid "Save"
+msgstr "保存"
+
+#: AfxRgbaLutVoronoiGenerator.cs:38 AfxRgbaLutVoronoiGenerator.cs:39
+msgctxt "terrorist"
+msgid "T"
+msgstr "T"
+
+#: AfxRgbaLutVoronoiGenerator.cs:40 AfxRgbaLutVoronoiGenerator.cs:41
+msgctxt "counter-terrorist"
+msgid "CT"
+msgstr "CT"
+
+#: AfxRgbaLutVoronoiGenerator.cs:42 AfxRgbaLutVoronoiGenerator.cs:43
+msgctxt "terrorist / counter-terrorist"
+msgid "T/CT neutral"
+msgstr "対象"
+
+#: AfxRgbaLutVoronoiGenerator.cs:45 AfxRgbaLutVoronoiGenerator.cs:46
+msgctxt "terrorist"
+msgid "T aim"
+msgstr "T aim"
+
+#: AfxRgbaLutVoronoiGenerator.cs:47 AfxRgbaLutVoronoiGenerator.cs:48
+msgctxt "counter-terrorist"
+msgid "CT aim"
+msgstr "CT aim"
+
+#: AfxRgbaLutVoronoiGenerator.cs:49 AfxRgbaLutVoronoiGenerator.cs:50
+msgctxt "terrorist / counter-terrorist"
+msgid "T/CT aim neutral"
+msgstr "T/CT aim ニュートラル"
+
+#: AfxRgbaLutVoronoiGenerator.cs:91
+msgctxt "Image"
+msgid "Target"
+msgstr "対象"
+
+#: AfxRgbaLutVoronoiGenerator.cs:92
+msgctxt "Image"
+msgid "Source"
+msgstr "ソース"
+
+#: AfxRgbaLutVoronoiGenerator.cs:93
+msgctxt "Image"
+msgid "RGB difference"
+msgstr "RGB差"
+
+#: AfxRgbaLutVoronoiGenerator.cs:386
+#, csharp-format
+msgid "Invalid / missing value in row {0}, column {1}."
+msgstr "行 {0}, 列{1} に 無効か存在しない値"
+
+#: AfxRgbaLutVoronoiGenerator.cs:387 AfxRgbaLutVoronoiGenerator.cs:440 AfxRgbaLutVoronoiGenerator.cs:457 AfxRgbaLutVoronoiGenerator.cs:639 AfxRgbaLutVoronoiGenerator.cs:651
+#: AfxRgbaLutVoronoiGenerator.cs:842 Launcher.cs:35 Tools/CustomLoader.cs:74
+msgid "Error"
+msgstr "エラー"
+
+#: AfxRgbaLutVoronoiGenerator.cs:439
+#, csharp-format
+msgid "Duplicate source color in row {0} (of row {1})."
+msgstr ""
+
+#: AfxRgbaLutVoronoiGenerator.cs:456
+msgid "Color map must not be empty."
+msgstr "カラーマップは空白にできません。"
+
+#: AfxRgbaLutVoronoiGenerator.cs:472
+#, fuzzy
+msgid "No Errors"
+msgstr "エラー"
+
+#: AfxRgbaLutVoronoiGenerator.cs:473
+msgid "Check passed"
+msgstr "アップデートを確認"
+
+#: AfxRgbaLutVoronoiGenerator.cs:638
+msgid "Error when creating / re-sizing color map."
+msgstr "カラーマップの作成/リサイズ中にエラーが発生しました。"
+
+#: AfxRgbaLutVoronoiGenerator.cs:650
+msgid "Iteration aborted."
+msgstr ""
+
+#: AfxRgbaLutVoronoiGenerator.cs:841
+#, csharp-format
+msgid "Saving to \"{0}\" failed."
+msgstr "\"{0}\" への保存に失敗しました。"
+
+#: Config.cs:56 Config.cs:200 Config.cs:238
+msgctxt "Config (game path)"
+msgid "please select"
+msgstr "選択"
+
+#: ErrorDialogue.cs:21
+msgctxt "Error dialog"
+msgid "HLAE Error"
+msgstr "HLAEエラー"
+
+#: ErrorDialogue.cs:22
+msgctxt "Error dialog"
+msgid "Code:"
+msgstr "コード:"
+
+#: ErrorDialogue.cs:23
+msgctxt "Error dialog"
+msgid "n/a"
+msgstr "n/a"
+
+#: ErrorDialogue.cs:24
+msgctxt "Error dialog"
+msgid "Description:"
+msgstr "概要:"
+
+#: ErrorDialogue.cs:25
+msgctxt "Error dialog"
+msgid "Solution:"
+msgstr "解決方法:"
+
+#: ErrorDialogue.cs:26
+msgctxt "Error dialog"
+msgid "&Copy to clipboard for support"
+msgstr "&サポートのためクリップボードにコピーする"
+
+#: ErrorDialogue.cs:27
+msgctxt "Error dialog"
+msgid "Okay"
+msgstr "OK"
+
+#: ErrorDialogue.cs:29
+msgctxt "Error dialog"
+msgid "Unknown error."
+msgstr "不明なエラー。"
+
+#: ErrorDialogue.cs:30
+msgctxt "Error dialog"
+msgid "No description available."
+msgstr "概要がありません。"
+
+#: ErrorDialogue.cs:31
+msgctxt "Error dialog"
+msgid "No solution available."
+msgstr "解決方法がありません。"
+
+#: HlaeErrors.cs:48
+msgctxt "HLAE errors"
+msgid "AfxHook error"
+msgstr "AfxHook エラー"
+
+#: HlaeErrors.cs:49
+#, fuzzy
+msgctxt "HLAE errors"
+msgid "Make sure you run the injector and the program to inject with same access rights and that no antivirus or anti-cheat is blocking its calls."
+msgstr "プログラムとインジェクターに同じ権限が付与されており、アンチウイルス/アンチチートソフトが阻止していないことを確認してください。"
+
+#: HlaeErrors.cs:50
+#, fuzzy
+msgctxt "HLAE errors"
+msgid "Make sure to exit anti-cheat software such as the ESEA client, Faceit client or Challengeme.gg before using HLAE."
+msgstr "HLAEの使用前にESEAクライアント/Faceitクライアント、Challengeme.ggのようなアンチチートが起動していないことを確認してください。"
+
+#: HlaeErrors.cs:65
+msgctxt "HLAE errors"
+msgid "Could not access / enter directory of DLL to inject"
+msgstr "インジェクトするDLLのディレクトリにアクセスできませんでした。"
+
+#: HlaeErrors.cs:66
+#, fuzzy
+msgctxt "HLAE errors"
+msgid "DLL can't be loaded."
+msgstr "DLLが見つかりませんでした。"
+
+#: HlaeErrors.cs:70
+msgctxt "HLAE errors"
+msgid "OpenProcess failed"
+msgstr "OpenProcessに失敗しました"
+
+#: HlaeErrors.cs:71
+msgctxt "HLAE errors"
+msgid "VirtualAllocEx read|write allocation failed."
+msgstr "VirtualAllocEx 読み取り | 書き込みアロケーションに失敗しました。"
+
+#: HlaeErrors.cs:72
+msgctxt "HLAE errors"
+msgid "GetImage failed."
+msgstr "GetImageに失敗しました。"
+
+#: HlaeErrors.cs:72
+#, fuzzy
+msgctxt "HLAE errors"
+msgid "AfxHook.dat missing, broken or not accessible"
+msgstr "AfxHook.datが見つかりません / 壊れています / アクセスできません"
+
+#: HlaeErrors.cs:72
+#, fuzzy
+msgctxt "HLAE errors"
+msgid "Try re-extracting or repair HLAE."
+msgstr "HLAEの再展開 / 修復を試してください。"
+
+#: HlaeErrors.cs:73
+msgctxt "HLAE errors"
+msgid "VirtualAllocEx read|write|execute allocation failed."
+msgstr "VirtualAllocEx 読み取り | 書き込み | 実行 アロケーションに失敗しました。"
+
+#: HlaeErrors.cs:74
+msgctxt "HLAE errors"
+msgid "WriteProcessMemory failed."
+msgstr "WriteProcessMemoryに失敗しました。"
+
+#: HlaeErrors.cs:75
+msgctxt "HLAE errors"
+msgid "FlushInstructionCache failed."
+msgstr "FlushInstructionCacheに失敗しました。"
+
+#: HlaeErrors.cs:76
+msgctxt "HLAE errors"
+msgid "CreateRemoteThread failed."
+msgstr "CreateRemoteThreadに失敗しました。"
+
+#: HlaeErrors.cs:77
+msgctxt "HLAE errors"
+msgid "AfxHook error: Unknown error code."
+msgstr "AfxHook エラー: 不明なエラーコードです。"
+
+#: HlaeErrors.cs:106
+msgctxt "HLAE errors"
+msgid "Make sure you entered the correct path to the game .exe and included the .exe file. Copy the path from the game properties in Steam to make sure you are using the correct path."
+msgstr ""
+
+#: HlaeErrors.cs:111
+msgctxt "HLAE errors"
+msgid "Failed to start injector."
+msgstr "インジェクターの開始に失敗しました。"
+
+#: HlaeErrors.cs:111
+#, csharp-format
+msgctxt "HLAE errors"
+msgid "Failed to start injector: {0}"
+msgstr "インジェクターの開始に失敗しました: {0}"
+
+#: HlaeErrors.cs:111
+#, fuzzy
+msgctxt "HLAE errors"
+msgid "injector.exe blocked. Probably caused by antivirus. Check it and re-extract HLAE (HLAE NEEDS to be extracted, don't run it from a .zip file)."
+msgstr "injector.exeがブロックされました。 アンチウイルスソフトの可能性があります。 設定を確認し、HLAEを再展開してください (HLAEは展開されている必要があります。 .zipファイルから実行しないでください)。"
+
+#: HlaeErrors.cs:118
+msgctxt "HLAE errors"
+msgid "Loader failed."
+msgstr "ローダー失敗。"
+
+#: HlaeErrors.cs:131
+msgctxt "HLAE errors"
+msgid "Make sure to close any anti-cheat software and that the path to the game .exe is correct."
+msgstr ""
+
+#: HlaeErrors.cs:140
+#, fuzzy
+msgctxt "HLAE errors"
+msgid "Make sure neither HLAE.exe, Steam.exe nor csgo.exe are set to run as admin."
+msgstr "HLAE.exe, Steam.exe, csgo.exe が管理者権限で起動していないことを確認してください。"
+
+#: HlaeErrors.cs:144
+msgctxt "HLAE errors"
+msgid "Loader could not create requested process."
+msgstr "ローダーが要求されたプロセスを作成できませんでした。"
+
+#: HlaeErrors.cs:144
+#, csharp-format
+msgctxt "HLAE errors"
+msgid "GetLastWin32Error = {0}: {1}"
+msgstr "GetLastWin32Error = {0}: {1}"
+
+#: LaunchCsgo.cs:41
+msgid "64 Bit CS:GO is not supported."
+msgstr "64ビットのCSGOはサポートされていません。"
+
+#: LaunchCsgoForm.cs:20
+msgctxt "Launch CS:GO dialog"
+msgid "Launch CS:GO ..."
+msgstr "CSGOを起動..."
+
+#: LaunchCsgoForm.cs:21
+msgctxt "Launch CS:GO dialog"
+msgid "Game"
+msgstr "ゲーム"
+
+#: LaunchCsgoForm.cs:22
+msgctxt "Launch CS:GO dialog"
+msgid "csgo.exe file:"
+msgstr "csgo.exe ファイル:"
+
+#: LaunchCsgoForm.cs:23 LaunchCsgoForm.cs:27
+msgctxt "Launch CS:GO dialog"
+msgid "Browse ..."
+msgstr "ブラウズ..."
+
+#: LaunchCsgoForm.cs:24
+msgctxt "Launch CS:GO dialog"
+msgid "Movie making config parent folder"
+msgstr "ムービー作成コンフィグ 親フォルダ"
+
+#: LaunchCsgoForm.cs:25
+msgctxt "Launch CS:GO dialog"
+msgid "What's this?"
+msgstr "これはなんですか?"
+
+#: LaunchCsgoForm.cs:26 LaunchCsgoForm.cs:29
+msgctxt "Launch CS:GO dialog"
+msgid "enable"
+msgstr "有効"
+
+#: LaunchCsgoForm.cs:28
+#, fuzzy
+msgctxt "Launch CS:GO dialog"
+msgid "Graphics Resolution"
+msgstr "グラフィック解像度"
+
+#: LaunchCsgoForm.cs:30
+msgctxt "Launch CS:GO dialog"
+msgid "Width:"
+msgstr "横:"
+
+#: LaunchCsgoForm.cs:31
+msgctxt "Launch CS:GO dialog"
+msgid "Height:"
+msgstr "縦:"
+
+#: LaunchCsgoForm.cs:32
+msgctxt "Launch CS:GO dialog"
+msgid "Actual results depend on the game."
+msgstr "実際の結果はゲームに依存します。"
+
+#: LaunchCsgoForm.cs:33
+msgctxt "Launch CS:GO dialog"
+msgid "full screen"
+msgstr "フルスクリーン"
+
+#: LaunchCsgoForm.cs:34
+msgctxt "Launch CS:GO dialog"
+msgid "Custom command line options"
+msgstr "カスタムコマンドラインオプション"
+
+#: LaunchCsgoForm.cs:35
+#, csharp-format
+msgctxt "Launch CS:GO dialog"
+msgid "{0} (prevents joining VAC secured server / VAC bans)"
+msgstr "{0} (VAC保護されたサーバーの接続 / VACBANを防ぎます)"
+
+#: LaunchCsgoForm.cs:36
+msgctxt "Launch CS:GO dialog"
+msgid "remember my changes"
+msgstr "変更を保存する"
+
+#: LaunchCsgoForm.cs:37
+msgctxt "Launch CS:GO dialog"
+msgid "L&aunch"
+msgstr "起動"
+
+#: LaunchCsgoForm.cs:38
+msgctxt "Launch CS:GO dialog"
+msgid "Can&cel"
+msgstr "キャンセル"
+
+#: LaunchCsgoForm.cs:133
+msgctxt "Launch CS:GO dialog | MmcfgFolder Description"
+msgid ""
+"When enabled you can set a parent folder for your movie making config for the game.\n"
+"The game will create a sub-folder called cfg there and store config.cfg\n"
+"and video settings in that folder.\n"
+"Also you can put your movie making config into that cfg sub-folder,\n"
+"however the game will load those only if they are not present in the csgo/cfg folder already."
+msgstr ""
+"有効にするとムービー作成用設定の親フォルダを設定出来るようになります。\n"
+"ゲームはcfgと呼ばれるサブフォルダを作成しconfig.cfgとビデオ設定を格納します。\n"
+"また、ムービー作成用の設定をそのcfgフォルダへ入れることが出来ます。\n"
+"しかし、ゲームはcsgo/cfgフォルダにそのconfigが存在しない場合のみ読み込みます。"
+
+#: LaunchCsgoForm.cs:134
+#, fuzzy
+msgctxt "Launch CS:GO dialog | MmcfgFolder Title"
+msgid "About movie making config parent folder"
+msgstr "ムービー作成コンフィグ 親フォルダ"
+
+#: LaunchCs2Form.cs:20
+msgctxt "Launch CS2 dialog"
+msgid "Launch CS2 ..."
+msgstr "CS2を起動..."
+
+#: LaunchCs2Form.cs:21
+msgctxt "Launch CS2 dialog"
+msgid "Game"
+msgstr "ゲーム"
+
+#: LaunchCs2Form.cs:22
+msgctxt "Launch CS2 dialog"
+msgid "cs2.exe file:"
+msgstr "cs2.exe ファイル:"
+
+#: LaunchCs2Form.cs:23 LaunchCs2Form.cs:27
+msgctxt "Launch CS2 dialog"
+msgid "Browse ..."
+msgstr "ブラウズ..."
+
+#: LaunchCs2Form.cs:24
+msgctxt "Launch CS2 dialog"
+msgid "Moviemaking config parent folder"
+msgstr "ムービー作成コンフィグ 親フォルダ"
+
+#: LaunchCs2Form.cs:25
+msgctxt "Launch CS2 dialog"
+msgid "What's this?"
+msgstr "これはなんですか?"
+
+#: LaunchCs2Form.cs:26 LaunchCs2Form.cs:29
+msgctxt "Launch CS2 dialog"
+msgid "enable"
+msgstr "有効"
+
+#: LaunchCs2Form.cs:28
+msgctxt "Launch CS2 dialog"
+msgid "Graphics Resolution"
+msgstr "グラフィック解像度"
+
+#: LaunchCs2Form.cs:30
+msgctxt "Launch CS2 dialog"
+msgid "Width:"
+msgstr "横:"
+
+#: LaunchCs2Form.cs:31
+msgctxt "Launch CS2 dialog"
+msgid "Height:"
+msgstr "縦:"
+
+#: LaunchCs2Form.cs:32
+msgctxt "Launch CS2 dialog"
+msgid "Actual results depend on the game."
+msgstr "実際の結果はゲームに依存します。"
+
+#: LaunchCs2Form.cs:33
+msgctxt "Launch CS2 dialog"
+msgid "full screen"
+msgstr "フルスクリーン"
+
+#: LaunchCs2Form.cs:34
+msgctxt "Launch CS2 dialog"
+msgid "Custom command line options"
+msgstr "カスタムコマンドラインオプション"
+
+#: LaunchCs2Form.cs:35
+#, csharp-format
+msgctxt "Launch CS2 dialog"
+msgid "{0} (prevents joining VAC secured server / VAC bans)"
+msgstr "{0} (VAC保護されたサーバーの接続 / VACBANを防ぎます)"
+
+#: LaunchCs2Form.cs:36
+msgctxt "Launch CS2 dialog"
+msgid "remember my changes"
+msgstr "変更を保存する"
+
+#: LaunchCs2Form.cs:37
+msgctxt "Launch CS2 dialog"
+msgid "L&aunch"
+msgstr "起動"
+
+#: LaunchCs2Form.cs:38
+msgctxt "Launch CS2 dialog"
+msgid "Can&cel"
+msgstr "キャンセル"
+
+#: LaunchCs2Form.cs:108
+#, fuzzy
+msgctxt "Launch CS2 dialog | MmcfgFolder Description"
+msgid ""
+"When enabled you can set a parent folder for your moviemaking config for the game.\n"
+"The game will create a sub-folder called cfg there and store configuration/video settings in that folder.\n"
+"Also you can put your moviemaking config into that cfg sub-folder."
+msgstr ""
+
+#: LaunchCs2Form.cs:109
+msgctxt "Launch CS2 dialog | MmcfgFolder Title"
+msgid "About moviemaking config parent folder"
+msgstr "ムービー作成コンフィグ 親フォルダ"
+
+#: Launcher.cs:35
+msgctxt "Launcher dialog"
+msgid "Launching failed."
+msgstr "起動に失敗しました。"
+
+#: Launcher.cs:49
+msgid "64 Bit GoldSrc is not supported."
+msgstr "64ビットのGoldSrcはサポートされていません。"
+
+#: LauncherForm.cs:20
+msgctxt "Launch GoldSrc dialog"
+msgid "Launch GoldSrc ..."
+msgstr "GoldSrcを起動中..."
+
+#: LauncherForm.cs:21
+msgctxt "Launch GoldSrc dialog"
+msgid "Game"
+msgstr "ゲーム"
+
+#: LauncherForm.cs:22
+msgctxt "Launch GoldSrc dialog"
+msgid "hl.exe"
+msgstr "hl.exe"
+
+#: LauncherForm.cs:23
+msgctxt "Launch GoldSrc dialog"
+msgid "Browse ..."
+msgstr "ブラウズ..."
+
+#: LauncherForm.cs:24
+msgctxt "Launch GoldSrc dialog"
+msgid "Modification:"
+msgstr "Mod:"
+
+#: LauncherForm.cs:28
+#, csharp-format
+msgctxt "Launch GoldSrc dialog"
+msgid "{0} (Counter-Strike)"
+msgstr "{0} (Counter-Strike)"
+
+#: LauncherForm.cs:29
+#, csharp-format
+msgctxt "Launch GoldSrc dialog"
+msgid "{0} (Day of Defeat)"
+msgstr "{0} (Day of Defeat)"
+
+#: LauncherForm.cs:30
+#, csharp-format
+msgctxt "Launch GoldSrc dialog"
+msgid "{0} (Team Fortress Classic)"
+msgstr "{0} (Team Fortress Classic)"
+
+#: LauncherForm.cs:31
+#, csharp-format
+msgctxt "Launch GoldSrc dialog"
+msgid "{0} (Half-Life)"
+msgstr "{0} (Half-Life)"
+
+#: LauncherForm.cs:32
+msgctxt "Launch GoldSrc dialog"
+msgid "Other modification:"
+msgstr "他のmod:"
+
+#: LauncherForm.cs:35
+msgctxt "Launch GoldSrc dialog"
+msgid "Custom command line options"
+msgstr "カスタムコマンドラインオプション"
+
+#: LauncherForm.cs:36
+#, fuzzy
+msgctxt "Launch GoldSrc dialog"
+msgid "Graphics Resolution"
+msgstr "グラフィック解像度"
+
+#: LauncherForm.cs:37
+msgctxt "Launch GoldSrc dialog"
+msgid "Width:"
+msgstr "横:"
+
+#: LauncherForm.cs:38
+msgctxt "Launch GoldSrc dialog"
+msgid "Height:"
+msgstr "縦:"
+
+#: LauncherForm.cs:39
+msgctxt "Launch GoldSrc dialog"
+msgid "Color Depth:"
+msgstr "色深度:"
+
+#: LauncherForm.cs:40
+msgctxt "Launch GoldSrc dialog"
+msgid "force resolution"
+msgstr "強制解像度"
+
+#: LauncherForm.cs:41
+msgctxt "Launch GoldSrc dialog"
+msgid "full screen"
+msgstr "フルスクリーン"
+
+#: LauncherForm.cs:45
+msgctxt "Launch GoldSrc dialog bpp"
+msgid "32 (High)"
+msgstr "32 (高)"
+
+#: LauncherForm.cs:46
+msgctxt "Launch GoldSrc dialog bpp"
+msgid "24 (Medium)"
+msgstr "24 (中)"
+
+#: LauncherForm.cs:47
+msgctxt "Launch GoldSrc dialog bpp"
+msgid "16 (Low)"
+msgstr "16 (低)"
+
+#: LauncherForm.cs:50
+msgctxt "Launch GoldSrc dialog"
+msgid "Advanced Settings"
+msgstr "高度な設定"
+
+#: LauncherForm.cs:51
+#, fuzzy
+msgctxt "Launch GoldSrc dialog"
+msgid "Force 8-bit alpha channel"
+msgstr "8bitアルファチャンネルを強制する"
+
+#: LauncherForm.cs:52
+#, fuzzy
+msgctxt "Launch GoldSrc dialog"
+msgid "Optimize window visibility on capture"
+msgstr "キャプチャ時にウィンドウ可視率を最適化する"
+
+#: LauncherForm.cs:53
+msgctxt "Launch GoldSrc dialog"
+msgid "Optimize desktop resolution"
+msgstr "デスクトップ解像度を最適化する"
+
+#: LauncherForm.cs:55
+msgctxt "Launch GoldSrc dialog"
+msgid "Render mode:"
+msgstr "描画モード:"
+
+#: LauncherForm.cs:58
+msgctxt "Launch GoldSrc dialog render mode"
+msgid "Standard"
+msgstr "通常"
+
+#: LauncherForm.cs:59
+msgctxt "Launch GoldSrc dialog render mode"
+msgid "FrameBuffer Object"
+msgstr "FrameBufferオブジェクト"
+
+#: LauncherForm.cs:60
+msgctxt "Launch GoldSrc dialog render mode"
+msgid "Memory DC"
+msgstr "メモリーDC"
+
+#: LauncherForm.cs:63
+msgctxt "Launch GoldSrc dialog"
+msgid "remember my changes"
+msgstr "変更を保存する"
+
+#: LauncherForm.cs:64
+msgctxt "Launch GoldSrc dialog"
+msgid "L&aunch"
+msgstr "起&動"
+
+#: LauncherForm.cs:65
+msgctxt "Launch GoldSrc dialog"
+msgid "Can&cel"
+msgstr "キャンセル"
+
+#: Loader.cs:138
+msgid ""
+"Image injection problem.\n"
+"Continue waiting?"
+msgstr ""
+"イメージの注入に問題\n"
+"待ち続けますか?"
+
+#: Loader.cs:138
+msgid "injector Warning"
+msgstr "インジェクター警告"
+
+#: Loader.cs:311
+msgid "Can not get Kernel32.dll handle."
+msgstr "Kernel32.dllのハンドルを取得できませんでした。"
+
+#: Loader.cs:324
+#, csharp-format
+msgid "IsWow64Process failed, error code: {0}"
+msgstr "IsWow64Processが失敗しました。 エラーコード: {0}"
+
+#: MainForm.cs:28
+#, csharp-format
+msgctxt "Window title, args: {0} - version"
+msgid "Half-Life Advanced Effects {0}"
+msgstr "Half-Life Advanced Effects {0}"
+
+#: MainForm.cs:30
+msgctxt "Main window | menu"
+msgid "File"
+msgstr "ファイル"
+
+#: MainForm.cs:31
+msgctxt "Main window | menu | File"
+msgid "Launch CS2"
+msgstr "CS2を起動"
+
+#: MainForm.cs:32
+msgctxt "Main window | menu | File"
+msgid "Launch CS:GO"
+msgstr "CS:GOを起動"
+
+#: MainForm.cs:33
+msgctxt "Main window | menu | File"
+msgid "Launch GoldSrc"
+msgstr "GoldSrcを起動"
+
+#: MainForm.cs:34
+msgctxt "Main window | menu | File"
+msgid "Exit"
+msgstr "退出"
+
+#: MainForm.cs:36
+msgctxt "Main Window | menu"
+msgid "View"
+msgstr "表示"
+
+#: MainForm.cs:37
+msgctxt "Main window | menu | View"
+msgid "Status Bar"
+msgstr "ステータスバー"
+
+#: MainForm.cs:39
+msgctxt "Main window | menu"
+msgid "Tools"
+msgstr "ツール"
+
+#: MainForm.cs:40
+msgctxt "Main window | menu | Tools"
+msgid "Calculators"
+msgstr "計算機"
+
+#: MainForm.cs:41
+msgctxt "Main window | menu | Tools | Calculators"
+msgid "File Size"
+msgstr "ファイルサイズ"
+
+#: MainForm.cs:42
+msgctxt "Main window | menu | Tools"
+msgid "Color Lookup Tables"
+msgstr "色対応表"
+
+#: MainForm.cs:43
+msgctxt "Main window | menu | Tools | Color Lookup Tables"
+msgid "Voronoi"
+msgstr ""
+
+#: MainForm.cs:44
+msgctxt "Main window | menu | Tools"
+msgid "GoldSrc"
+msgstr "GoldSrc"
+
+#: MainForm.cs:45
+msgctxt "Main window | menu | Tools | GoldSrc"
+msgid "Demo Tools"
+msgstr "Demoツール"
+
+#: MainForm.cs:46
+msgctxt "Main window | menu | Tools | GoldSrc"
+msgid "Sky Manager"
+msgstr "Skyマネージャー"
+
+#: MainForm.cs:48
+msgctxt "Main window | menu | Tools"
+msgid "Developer"
+msgstr "開発者"
+
+#: MainForm.cs:49
+msgctxt "Main window | menu | Tools | Developer"
+msgid "Custom Loader"
+msgstr "カスタムローダー"
+
+#: MainForm.cs:50
+msgctxt "Main window | menu | Tools | Developer"
+msgid "Own GUID to ClipBoard"
+msgstr ""
+
+#: MainForm.cs:51
+msgctxt "Main window | menu | Tools | Developer"
+msgid "New GUID to ClipBoard"
+msgstr ""
+
+#: MainForm.cs:53
+msgctxt "Main window | menu"
+msgid "Help"
+msgstr "ヘルプ"
+
+#: MainForm.cs:54
+msgctxt "Main window | menu | Help"
+msgid "Check for Updates"
+msgstr "アップデートを確認"
+
+#: MainForm.cs:55
+msgctxt "Main window | menu | Help | Check for Updates"
+msgid "Auto Check"
+msgstr "自動チェック"
+
+#: MainForm.cs:56
+msgctxt "Main window | menu | Help | Check for Updates"
+msgid "Check Now"
+msgstr "今すぐ確認する"
+
+#: MainForm.cs:57
+msgctxt "Main window | menu | Help"
+msgid "Official GitHub"
+msgstr "公式GitHub"
+
+#: MainForm.cs:59
+msgctxt "Main window | menu"
+msgid "Donate"
+msgstr "寄付"
+
+#: MainForm.cs:61
+msgctxt "Main window | check updates strip"
+msgid "Check for updates automatically?"
+msgstr "アップデートを自動的に確認しますか?"
+
+#: MainForm.cs:62
+msgctxt "Main window | check updates strip"
+msgid "Yes"
+msgstr "はい"
+
+#: MainForm.cs:63
+msgctxt "Main window | check updates strip"
+msgid "No"
+msgstr "いいえ"
+
+#: MainForm.cs:66
+msgctxt "Main window | update status strip"
+msgid "Ignore"
+msgstr "無視"
+
+#: MainForm.cs:67
+msgctxt "Main window | update status strip"
+msgid "OK"
+msgstr "OK"
+
+#: MainForm.cs:68
+msgctxt "Main window | update status strip | label"
+msgid "Update status unknown"
+msgstr "アップデート状況不明"
+
+#: MainForm.cs:70
+msgid "Contact"
+msgstr "連絡"
+
+#: MainForm.cs:72
+msgid "Help"
+msgstr "ヘルプ"
+
+#: MainForm.cs:73
+msgid "Language:"
+msgstr "言語:"
+
+#: MainForm.cs:74
+msgid "Selection:"
+msgstr "解決方法:"
+
+#: MainForm.cs:76
+msgid "Official support page (English)"
+msgstr "公式サポートページ(英語)"
+
+#: MainForm.cs:77
+msgid "HLAE Chinese Station"
+msgstr ""
+
+#: MainForm.cs:80
+msgctxt "Language"
+msgid "English (en)"
+msgstr "英語(en)"
+
+#: MainForm.cs:83
+msgctxt "Language"
+msgid "Chinese (zh-CN)"
+msgstr "中国語 (zh-CN)"
+
+#: MainForm.cs:130
+#, fuzzy
+msgid "HLAE path error"
+msgstr "HLAEエラー"
+
+#: MainForm.cs:131
+msgid "HLAE path:"
+msgstr ""
+
+#: MainForm.cs:133
+msgid "Warning: Your HLAE path shown above contains non-basic latin characters (meaning characters outside the 7-bit ASCII range), which will lead to multiple problems in-game if not fixed!"
+msgstr ""
+
+#: MainForm.cs:138
+msgid "VAC warning"
+msgstr ""
+
+#: MainForm.cs:139
+msgid "The HLAE tool is technically a hack, therefore you should only use it for making gaming videos or watching demos. Joining VAC protected servers with HLAE will probably get you VAC banned."
+msgstr ""
+
+#: MainForm.cs:140 MainForm.cs:147
+#, fuzzy
+msgid "OK"
+msgstr "OK"
+
+#: MainForm.cs:145
+msgid "Epilepsy warning"
+msgstr ""
+
+#: MainForm.cs:146
+msgid "This software may cause fast-changing images and colors on your screen."
+msgstr ""
+
+#: MainForm.cs:149
+msgid "Frequently Asked Questions (FAQ)"
+msgstr ""
+
+#: MainForm.cs:216
+msgctxt "Main window | update status strip | label"
+msgid "Update available!"
+msgstr "アップデートがあります!"
+
+#: MainForm.cs:225
+msgctxt "Main window | update status strip | label"
+msgid "Your version is up to date :)"
+msgstr "最新版を使用しています :)"
+
+#: MainForm.cs:237
+msgctxt "Main window | update status strip | label"
+msgid "Update check failed :("
+msgstr "アップデート確認に失敗しました :("
+
+#: MainForm.cs:246
+msgctxt "Main window | update status strip | label"
+msgid "Checking for updates ..."
+msgstr "アップデートを確認中..."
+
+#: Tools/Calculator.cs:18
+msgctxt "File Size Calculator"
+msgid "File Size Calculator"
+msgstr "ファイルサイズ計算機"
+
+#: Tools/Calculator.cs:19
+msgctxt "File Size Calculator"
+msgid "Width:"
+msgstr "幅:"
+
+#: Tools/Calculator.cs:20
+msgctxt "File Size Calculator"
+msgid "Height:"
+msgstr "高さ:"
+
+#: Tools/Calculator.cs:21
+msgctxt "File Size Calculator"
+msgid "FPS:"
+msgstr "FPS:"
+
+#: Tools/Calculator.cs:22
+msgctxt "File Size Calculator"
+msgid "Duration:"
+msgstr "長さ:"
+
+#: Tools/Calculator.cs:23
+msgctxt "File Size Calculator | Duration"
+msgid "min"
+msgstr "最小"
+
+#: Tools/Calculator.cs:24
+msgctxt "File Size Calculator | Duration"
+msgid "sec"
+msgstr "秒"
+
+#: Tools/Calculator.cs:25
+msgctxt "File Size Calculator"
+msgid "Estimated Disk Usage"
+msgstr "予測ディスク使用量"
+
+#: Tools/Calculator.cs:26
+msgctxt "File Size Calculator | Estimate"
+msgid "HuffYuv encoded output"
+msgstr "HuffYuvエンコード出力"
+
+#: Tools/CustomLoader.cs:74
+msgctxt "Custom Loader dialog"
+msgid "CustomLoader failed"
+msgstr "CustomLoader失敗"
+
+#: Tools/CustomLoaderForm.cs:24
+msgctxt "Custom Loader dialog"
+msgid "Custom Loader"
+msgstr "カスタムローダー"
+
+#: Tools/CustomLoaderForm.cs:25
+msgctxt "Custom Loader dialog | Program"
+msgid "ProgramPath:"
+msgstr "プログラムパス:"
+
+#: Tools/CustomLoaderForm.cs:26
+msgctxt "Custom Loader dialog | Program"
+msgid "CommandLine:"
+msgstr "コマンドライン:"
+
+#: Tools/CustomLoaderForm.cs:27
+msgctxt "Custom Loader dialog | Program"
+msgid "Browse ..."
+msgstr "ブラウズ..."
+
+#: Tools/CustomLoaderForm.cs:28
+msgctxt "Custom Loader dialog | DLLS"
+msgid "DLLs to inject"
+msgstr "インジェクトする DLLs"
+
+#: Tools/CustomLoaderForm.cs:29
+msgctxt "Custom Loader dialog | DLLS"
+msgid "Browse ..."
+msgstr "ブラウズ..."
+
+#: Tools/CustomLoaderForm.cs:30
+msgctxt "Custom Loader dialog | DLLS"
+msgid "Delete"
+msgstr "削除"
+
+#: Tools/CustomLoaderForm.cs:31
+msgctxt "Custom Loader dialog | DLLS"
+msgid "Up"
+msgstr "上"
+
+#: Tools/CustomLoaderForm.cs:32
+msgctxt "Custom Loader dialog | DLLS"
+msgid "Down"
+msgstr "下"
+
+#: Tools/CustomLoaderForm.cs:33
+msgctxt "Custom Loader dialog | DLLS"
+msgid "Hint: You can Drag && Drop DLLs in the box above."
+msgstr "ヒント: DLLs を下のボックスにドラッグアンドドロップできます。"
+
+#: Tools/CustomLoaderForm.cs:34
+msgctxt "Custom Loader dialog"
+msgid "&OK"
+msgstr "&OK"
+
+#: Tools/CustomLoaderForm.cs:35
+msgctxt "Custom Loader dialog"
+msgid "&Abort"
+msgstr "&放棄"
+
+#: Tools/CustomLoaderForm.cs:36
+msgid "Add environment variables: name=value"
+msgstr "環境変数を追加: 変数名=値"
+
+#: Tools/CustomLoaderForm.cs:72
+msgctxt "Custom Loader dialog | Program filter"
+msgid "Program to launch and hook (.exe)|*.exe"
+msgstr "起動するプログラムとフック (.exe)|*.exe"
+
+#: Tools/CustomLoaderForm.cs:80
+msgctxt "Custom Loader dialog | DLL filter"
+msgid "Hook DLL (.dll)|*.dll"
+msgstr "フックするDLL (.dll)|*.dll"
+
+#, fuzzy
+#~ msgctxt "HLAE errors"
+#~ msgid "Try using CS:GO Launcher instead of Custom Loader."
+#~ msgstr "カスタムランチャーの代わりにCSGOランチャーをお試しください。"
+
+#, fuzzy
+#~ msgid "Config error"
+#~ msgstr "不明なエラー。"
+
+#~ msgid "image"
+#~ msgstr "画像"
+
+#~ msgctxt "Manual URL (localized)"
+#~ msgid "https://github.com/advancedfx/advancedfx/wiki"
+#~ msgstr "https://github.com/advancedfx/advancedfx/wiki"
+
+#~ msgctxt "Main window | menu | Help"
+#~ msgid "Online Manual ({0})"
+#~ msgstr "オンラインマニュアル ({0})"
+
+#~ msgctxt "Main window"
+#~ msgid "Open Online Manual ({0})"
+#~ msgstr "オンラインマニュアルを開く ({0})"
