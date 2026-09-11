@@ -31,7 +31,7 @@ add_shader("afx_line_vs20" "vs_2_0")
 add_shader("afx_line_ps20" "ps_2_0")
 add_shader("afx_drawtexture_ps20" "ps_2_0")
 
-if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
+if(AFX_TARGET_IS_WIN32)
     add_shader("afx_pgldraw_vs20" "vs_2_0")
     add_shader("afx_pgldraw_ps20" "ps_2_0")
     add_shader("afx_depth_ps20" "ps_2_0")
@@ -43,7 +43,7 @@ endif()
 ###############################################################################
 ## BEGIN protobuf
 
-if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
+if(AFX_TARGET_IS_WIN32)
     #find_package(protobuf CONFIG REQUIRED)
     include(${protobuf_SOURCE_DIR}/cmake/protobuf-generate.cmake)
 
@@ -52,6 +52,7 @@ if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
     target_link_libraries(AfxHookSourceProtobufs PUBLIC protobuf::libprotobuf)
 
     set(PROTO_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/generated/csgo")
+    file(MAKE_DIRECTORY "${PROTO_BINARY_DIR}")
 
     target_include_directories(AfxHookSourceProtobufs PUBLIC "$<BUILD_INTERFACE:${PROTO_BINARY_DIR}>")
 
@@ -84,6 +85,10 @@ target_compile_definitions(AfxHookSource PRIVATE
     AFX_MIRV_PGL
     _CRT_SECURE_NO_WARNINGS
 )
+
+if(MSVC)
+    target_compile_options(AfxHookSource PRIVATE /FS)
+endif()
 
 # generate PDB in release too:
 target_compile_options(AfxHookSource PRIVATE $<$<AND:$<CXX_COMPILER_ID:MSVC>,$<CONFIG:RELEASE>>:/Zi>)
@@ -403,7 +408,7 @@ source_group("shared" REGULAR_EXPRESSION "/shared/")
 source_group("shared/hooks" REGULAR_EXPRESSION "/shared/hooks/")
 source_group("shared/vcpp" REGULAR_EXPRESSION "/shared/vcpp/")
 
-if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+if(AFX_TARGET_IS_X64)
     add_custom_command(
 	    WORKING_DIRECTORY ${AfxHookSource_BINARY_DIR}
 	    OUTPUT "${AfxHookSource_BINARY_DIR}/afx_iface_passthrough_x64.obj"
@@ -426,7 +431,7 @@ if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
     )
 endif()
 
-if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
+if(AFX_TARGET_IS_WIN32)
     target_include_directories(AfxHookSource PRIVATE
         "${protobuf_SOURCE_DIR}/src"
         AfxHookSourceProtobufs

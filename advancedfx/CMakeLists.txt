@@ -2,6 +2,16 @@ cmake_minimum_required (VERSION 3.24)
 
 project ("advancedfx")
 
+set(AFX_TARGET_IS_WIN32 FALSE)
+if(CMAKE_SIZEOF_VOID_P EQUAL 4)
+    set(AFX_TARGET_IS_WIN32 TRUE)
+endif()
+
+set(AFX_TARGET_IS_X64 FALSE)
+if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+    set(AFX_TARGET_IS_X64 TRUE)
+endif()
+
 option(AFX_L4N_PLUGIN_ONLY
     "Build only the x86 AfxHookSource target as an L4N plugin"
     OFF)
@@ -107,7 +117,7 @@ endif()
 include(FetchContent)
 include(ExternalProject)
 
-if(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+if(AFX_TARGET_IS_X64)
 
 #
 # Setup "corrosion" for including Rust code in our projects:
@@ -160,7 +170,7 @@ endif()
 # Project setup
 #
 
-if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
+if(AFX_TARGET_IS_WIN32)
     add_subdirectory("deps/release/protobuf")
     add_subdirectory("deps/release/openexr")
 
@@ -169,6 +179,9 @@ if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
         add_subdirectory("AfxHookSource")
 
         target_compile_definitions(AfxHookSource PRIVATE AFX_L4N_PLUGIN)
+        if(L4N_CURSOR_DIAGNOSTICS_ONLY)
+            target_compile_definitions(AfxHookSource PRIVATE AFX_L4N_CURSOR_DIAGNOSTICS_ONLY=1)
+        endif()
         set_target_properties(AfxHookSource PROPERTIES
             OUTPUT_NAME "l4n_hlae_plugin"
         )
@@ -189,7 +202,7 @@ if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
 	        DEPENDS hlae
         )
     endif()
-elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+elseif(AFX_TARGET_IS_X64)
 
     FetchContent_Declare(
 	    nasm
@@ -225,7 +238,7 @@ else()
 	set(CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS} "${MSVC_CRT_DIR}/vccorlib${v}.dll" )
 endif()
 
-if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
+if(AFX_TARGET_IS_WIN32)
     if(AFX_L4N_PLUGIN_ONLY)
         install(
             PROGRAMS
@@ -281,7 +294,7 @@ if(CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
         DESTINATION "pdb/x64"
     )
     endif()
-elseif(CMAKE_GENERATOR_PLATFORM STREQUAL "x64")
+elseif(AFX_TARGET_IS_X64)
     install(
         PROGRAMS
             ${CMAKE_INSTALL_SYSTEM_RUNTIME_LIBS}

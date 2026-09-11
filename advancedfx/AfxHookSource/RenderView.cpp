@@ -32,6 +32,10 @@
 #include "MirvPgl.h"
 #include "../shared/MirvCamIO.h"
 
+#ifdef AFX_L4N_PLUGIN
+#include "l4n_plugin.h"
+#endif
+
 #undef CreateEvent
 
 extern WrpVEngineClient * g_VEngineClient;
@@ -42,6 +46,132 @@ BvhImport g_BvhImport;
 
 // Create singelton instance:
 Hook_VClient_RenderView g_Hook_VClient_RenderView;
+
+#ifdef AFX_L4N_PLUGIN
+namespace {
+
+struct CursorStateSnapshot {
+	bool cursorOk = false;
+	bool showing = false;
+	DWORD cursorError = ERROR_SUCCESS;
+	std::uintptr_t foregroundWindow = 0;
+	DWORD foregroundPid = 0;
+	bool gameForeground = false;
+	bool gameFocus = false;
+	bool cameraEnabled = false;
+	std::uintptr_t captureWindow = 0;
+	bool clipOk = false;
+	RECT clip = {};
+	bool suspendCandidate = false;
+
+	bool operator==(const CursorStateSnapshot& other) const {
+		return cursorOk == other.cursorOk &&
+			showing == other.showing &&
+			cursorError == other.cursorError &&
+			foregroundWindow == other.foregroundWindow &&
+			foregroundPid == other.foregroundPid &&
+			gameForeground == other.gameForeground &&
+			gameFocus == other.gameFocus &&
+			cameraEnabled == other.cameraEnabled &&
+			captureWindow == other.captureWindow &&
+			clipOk == other.clipOk &&
+			clip.left == other.clip.left &&
+			clip.top == other.clip.top &&
+			clip.right == other.clip.right &&
+			clip.bottom == other.clip.bottom &&
+			suspendCandidate == other.suspendCandidate;
+	}
+};
+
+class CursorStateDetector {
+public:
+	void Update(MirvInput* input) {
+		CursorStateSnapshot state;
+
+		CURSORINFO cursorInfo = {};
+		cursorInfo.cbSize = sizeof(cursorInfo);
+		state.cursorOk = FALSE != GetCursorInfo(&cursorInfo);
+		if (state.cursorOk) {
+			state.showing = 0 != (cursorInfo.flags & CURSOR_SHOWING);
+		} else {
+			state.cursorError = GetLastError();
+		}
+
+		HWND foregroundWindow = GetForegroundWindow();
+		state.foregroundWindow = reinterpret_cast<std::uintptr_t>(foregroundWindow);
+		if (foregroundWindow != nullptr) {
+			GetWindowThreadProcessId(foregroundWindow, &state.foregroundPid);
+		}
+		state.gameForeground =
+			foregroundWindow != nullptr &&
+			state.foregroundPid == GetCurrentProcessId();
+
+		state.gameFocus = input->HasFocus();
+		state.cameraEnabled = input->GetCameraControlMode();
+		state.captureWindow = reinterpret_cast<std::uintptr_t>(GetCapture());
+		state.clipOk = FALSE != GetClipCursor(&state.clip);
+		state.suspendCandidate =
+			state.cursorOk && state.showing && state.gameForeground &&
+			state.gameFocus && state.cameraEnabled;
+		const bool rightButtonDown =
+			state.suspendCandidate &&
+			(0 != (GetAsyncKeyState(VK_RBUTTON) & 0x8000));
+
+		input->SetMouseControlTemporaryOverride(rightButtonDown);
+
+		bool appliedSuspension = false;
+#if !defined(AFX_L4N_CURSOR_DIAGNOSTICS_ONLY) || !AFX_L4N_CURSOR_DIAGNOSTICS_ONLY
+		input->SetMouseControlSuspended(state.suspendCandidate);
+		appliedSuspension = state.suspendCandidate && !rightButtonDown;
+#endif
+		if (!m_HasAppliedSuspension ||
+			m_LastAppliedSuspension != appliedSuspension) {
+			L4nPluginLogMouseControlState(appliedSuspension ? 1 : 0);
+			m_LastAppliedSuspension = appliedSuspension;
+			m_HasAppliedSuspension = true;
+		}
+
+		const ULONGLONG now = GetTickCount64();
+		const bool stateChanged = !m_HasState || !(state == m_LastState);
+		const bool heartbeatDue = !m_HasLog || now - m_LastLogTick >= 2000;
+		if (stateChanged || heartbeatDue) {
+			L4nPluginLogCursorState(
+				state.cursorOk ? 1 : 0,
+				state.showing ? 1 : 0,
+				static_cast<unsigned long>(state.cursorError),
+				state.foregroundWindow,
+				static_cast<unsigned long>(state.foregroundPid),
+				state.gameForeground ? 1 : 0,
+				state.gameFocus ? 1 : 0,
+				state.cameraEnabled ? 1 : 0,
+				state.captureWindow,
+				state.clipOk ? 1 : 0,
+				state.clip.left,
+				state.clip.top,
+				state.clip.right,
+				state.clip.bottom,
+				state.suspendCandidate ? 1 : 0);
+			m_LastLogTick = now;
+			m_HasLog = true;
+		}
+
+		m_LastState = state;
+		m_HasState = true;
+	}
+
+private:
+	bool m_HasState = false;
+	bool m_HasLog = false;
+	bool m_HasAppliedSuspension = false;
+	bool m_LastAppliedSuspension = false;
+	ULONGLONG m_LastLogTick = 0;
+	CursorStateSnapshot m_LastState;
+};
+
+CursorStateDetector g_CursorStateDetector;
+
+} // namespace
+#endif
 
 
 unsigned int g_OfsCvarFloatValue;
@@ -299,6 +429,10 @@ void TrySetView(float Tx, float Ty, float Tz, float Rx, float Ry, float Rz, floa
 
 void Hook_VClient_RenderView::OnViewOverride(float &Tx, float &Ty, float &Tz, float &Rx, float &Ry, float &Rz, float &Fov)
 {
+#ifdef AFX_L4N_PLUGIN
+	g_CursorStateDetector.Update(m_MirvInput);
+#endif
+
 	bool originOrAnglesOverriden = false;
 
 	float curTime = g_MirvTime.GetTime();

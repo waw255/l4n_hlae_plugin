@@ -49,6 +49,10 @@ public:
 	void Supply_MouseFrameEnd(void);
 	void Supply_Focus(bool hasFocus);
 
+	// Temporarily release mouse input while a game UI owns the cursor.
+	void SetMouseControlSuspended(bool suspended);
+	void SetMouseControlTemporaryOverride(bool enabled);
+
 	//
 
 	bool GetCamResetView(void);
@@ -65,6 +69,10 @@ public:
 
 	bool IsActive() {
 		return m_Focus && !m_Dependencies->GetSuspendMirvInput() && m_CameraControlMode;
+	}
+
+	bool HasFocus() const {
+		return m_Focus;
 	}
 
 	double GetKeyboardSensitivty(void);
@@ -374,6 +382,10 @@ private:
 
 	bool m_MMove = false;
 	bool m_CameraControlMode;
+	bool m_MouseControlSuspensionRequested = false;
+	bool m_MouseControlSuspended = false;
+	bool m_MouseControlTemporaryOverride = false;
+	bool m_ResettingCursorBaseline = false;
 	bool m_Focus;
 	bool m_IgnoreKeyUp;
 	bool m_IgnoreNextKey;
@@ -439,6 +451,9 @@ private:
 	double CalcDeltaExpSmooth(double deltaT, double deltaVal);
 
 	void ProcessRawInputData(PRAWINPUT pData);
+	void ResetMouseInputState();
+	void RefreshCursorBaseline();
+	void ApplyMouseControlSuspension();
 
 	double LimitFov(double fov);
 };

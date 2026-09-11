@@ -275,6 +275,48 @@ void L4nPluginLogEvent(const char* event_name) {
     Log("event=%s", event_name == nullptr ? "<null>" : event_name);
 }
 
+void L4nPluginLogCursorState(
+    int cursor_ok,
+    int showing,
+    unsigned long cursor_error,
+    std::uintptr_t foreground_window,
+    unsigned long foreground_pid,
+    int game_foreground,
+    int game_focus,
+    int camera_enabled,
+    std::uintptr_t capture_window,
+    int clip_ok,
+    int clip_left,
+    int clip_top,
+    int clip_right,
+    int clip_bottom,
+    int suspend_candidate) {
+    Log(
+        "event=cursor detector cursor_ok=%d showing=%d cursor_error=%lu "
+        "foreground_hwnd=0x%p foreground_pid=%lu game_foreground=%d "
+        "game_focus=%d camera_enabled=%d capture=0x%p clip_ok=%d "
+        "clip=(%d,%d)-(%d,%d) suspend_candidate=%d",
+        cursor_ok,
+        showing,
+        cursor_error,
+        reinterpret_cast<void*>(foreground_window),
+        foreground_pid,
+        game_foreground,
+        game_focus,
+        camera_enabled,
+        reinterpret_cast<void*>(capture_window),
+        clip_ok,
+        clip_left,
+        clip_top,
+        clip_right,
+        clip_bottom,
+        suspend_candidate);
+}
+
+void L4nPluginLogMouseControlState(int suspended) {
+    Log("event=mouse control %s", suspended ? "suspended" : "resumed");
+}
+
 extern "C" __declspec(dllexport) IL4NPlugin* GetL4NPluginInstance() {
     Log("GetL4NPluginInstance called");
     static L4NHlaePlugin plugin;

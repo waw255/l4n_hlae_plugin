@@ -431,6 +431,59 @@ bool MirvInput::GetCameraControlMode(void)
 void MirvInput::SetCameraControlMode(bool enable)
 {
 	m_CameraControlMode = enable;
+	if (!enable)
+		SetMouseControlTemporaryOverride(false);
+}
+
+void MirvInput::ResetMouseInputState()
+{
+	m_MouseInput.Clear();
+	m_MouseInput.Normal.LeftButtonDown = false;
+	m_MouseInput.Normal.RightButtonDown = false;
+	m_MouseInput.Raw.LeftButtonDown = false;
+	m_MouseInput.Raw.RightButtonDown = false;
+	m_MNormalLeftButtonWasDown = false;
+	m_MNormalRightButtonWasDown = false;
+	m_FirstGetCursorPos = true;
+}
+
+void MirvInput::RefreshCursorBaseline()
+{
+	// GetCursorPos is itself hooked by HLAE. The guard keeps this internal
+	// baseline read from being interpreted as camera movement if that hook
+	// calls back into Supply_GetCursorPos.
+	m_ResettingCursorBaseline = true;
+	POINT point = {};
+	if (GetCursorPos(&point))
+	{
+		m_LastCursorX = point.x;
+		m_LastCursorY = point.y;
+	}
+	m_ResettingCursorBaseline = false;
+}
+
+void MirvInput::SetMouseControlSuspended(bool suspended)
+{
+	m_MouseControlSuspensionRequested = suspended;
+	ApplyMouseControlSuspension();
+}
+
+void MirvInput::SetMouseControlTemporaryOverride(bool enabled)
+{
+	m_MouseControlTemporaryOverride = enabled;
+	ApplyMouseControlSuspension();
+}
+
+void MirvInput::ApplyMouseControlSuspension()
+{
+	const bool suspended =
+		m_MouseControlSuspensionRequested && !m_MouseControlTemporaryOverride;
+	if (m_MouseControlSuspended == suspended)
+		return;
+
+	m_MouseControlSuspended = suspended;
+	ResetMouseInputState();
+	RefreshCursorBaseline();
 }
 
 double MirvInput::GetKeyboardSensitivty(void)
@@ -781,6 +834,29 @@ bool  MirvInput::Supply_MouseEvent(DWORD uMsg, WPARAM & wParam, LPARAM & lParam)
 		return false;
 	}
 
+	const bool rightButtonDown =
+		uMsg == WM_RBUTTONDOWN || uMsg == WM_RBUTTONDBLCLK;
+	const bool rightButtonUp = uMsg == WM_RBUTTONUP;
+
+	if (m_CameraControlMode && rightButtonDown &&
+		m_MouseControlSuspensionRequested)
+	{
+		SetMouseControlTemporaryOverride(true);
+		return true;
+	}
+
+	if (m_CameraControlMode && rightButtonUp &&
+		m_MouseControlTemporaryOverride)
+	{
+		SetMouseControlTemporaryOverride(false);
+		return true;
+	}
+
+	if (m_MouseControlSuspended)
+	{
+		return false;
+	}
+
 	if (m_CameraControlMode && m_MMove)
 	{
 		switch (uMsg)
@@ -838,6 +914,20 @@ void MirvInput::ProcessRawInputData(PRAWINPUT pData) {
 	switch (pData->header.dwType) {
 	case RIM_TYPEMOUSE: {
 		RAWMOUSE* rawmouse = &(pData->data.mouse);
+		if (m_CameraControlMode &&
+			(rawmouse->usButtonFlags & RI_MOUSE_RIGHT_BUTTON_DOWN))
+		{
+			SetMouseControlTemporaryOverride(true);
+		}
+		if (m_CameraControlMode &&
+			(rawmouse->usButtonFlags & RI_MOUSE_RIGHT_BUTTON_UP))
+		{
+			SetMouseControlTemporaryOverride(false);
+		}
+
+		if (m_MouseControlSuspended)
+			break;
+
 		int dX = 0;
 		int dY = 0;
 		int wheelDelta = 0;
@@ -1008,10 +1098,16 @@ void MirvInput::Supply_GetCursorPos(LPPOINT lpPoint)
 	if(!lpPoint)
 		return;
 
+	if (m_ResettingCursorBaseline)
+		return;
+
 	if(!m_Focus)
 		return;
 
 	if(m_Dependencies->GetSuspendMirvInput())
+		return;
+
+	if (m_MouseControlSuspended)
 		return;
 
 	if(m_CameraControlMode)
@@ -1055,6 +1151,9 @@ void MirvInput::Supply_GetCursorPos(LPPOINT lpPoint)
 
 void MirvInput::Supply_SetCursorPos(int x, int y)
 {
+	if (m_MouseControlSuspended)
+		return;
+
 	// X and Y are not reliable due to clip cursor rect e.g., so get real position from Windows:
 	POINT pt;
 	if(GetCursorPos(&pt)) {
@@ -1070,6 +1169,12 @@ void MirvInput::Supply_MouseFrameEnd(void)
 
 	if(m_Dependencies->GetSuspendMirvInput())
 		return;
+
+	if (m_MouseControlSuspended)
+	{
+		ResetMouseInputState();
+		return;
+	}
 
 	if(m_CameraControlMode)
 	{

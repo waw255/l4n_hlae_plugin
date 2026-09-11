@@ -14,6 +14,10 @@ option(L4N_PACKAGE_RELEASE
     "Create a copy-ready Release package after building the native plugin"
     ON)
 
+option(L4N_CURSOR_DIAGNOSTICS_ONLY
+    "Log Win32 cursor state without changing mouse input behavior"
+    OFF)
+
 set(L4N_VS_INSTALL_PATH "" CACHE PATH
     "Visual Studio installation path; empty enables automatic detection")
 
@@ -40,8 +44,8 @@ if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
 endif()
 
 if(L4N_BUILD_HLAE_PLUGIN)
-    if(NOT CMAKE_GENERATOR_PLATFORM STREQUAL "Win32")
-        message(FATAL_ERROR "The HLAE plugin must be configured with the Win32 platform")
+    if(NOT CMAKE_SIZEOF_VOID_P EQUAL 4)
+        message(FATAL_ERROR "The HLAE plugin must be configured for a 32-bit target")
     endif()
 
     # Keep the complete plugin and its static dependencies on the same CRT.
