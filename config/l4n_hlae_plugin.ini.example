@@ -1,3 +1,4 @@
+; l4n_hlae_plugin version: v0.2
 [HLAE]
 ; Root of the packaged HLAE runtime resources.
 ; Relative paths are resolved from the folder containing this INI file.

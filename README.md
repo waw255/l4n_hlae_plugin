@@ -3,7 +3,7 @@
 > [!IMPORTANT]
 > 需要 **L4N v2.34.0 或更高版本**。低于此版本的 L4N 可能无法正确加载本插件。
 
-`l4n_hlae_plugin` v0.1 是面向 32 位 Left 4 Dead 2 的 L4N 原生插件，将 HLAE Source 1 作为 L4N 插件加载。
+`l4n_hlae_plugin` v0.2 是面向 32 位 Left 4 Dead 2 的 L4N 原生插件，将 HLAE Source 1 作为 L4N 插件加载。
 
 > [!WARNING]
 > 本项目由 AI 开发和整理。请自行审查源码、构建结果和运行行为，注意甄别。建议只在本地或离线环境使用，不要带实验性 DLL 连接 VAC 保护的服务器。
@@ -142,7 +142,7 @@ git -C ..\advancedfx-upstream rev-parse HEAD
 
 ## 运行注意事项
 
-- 正式插件文件名为 `l4n_hlae_plugin.dll`，版本为 `v0.1`。
+- 正式插件文件名为 `l4n_hlae_plugin.dll`，版本为 `v0.2`。
 - 不要同时安装旧版 `LoadLibraryExW` 适配器、原始 `AfxHookSource.dll`、`injector.exe` 或 `AfxHook.dat`。
 - 更新前备份 `bin/neko/plugins/l4n_hlae_plugin.dll` 和配置文件。
 - 如果游戏崩溃、卡死、渲染异常或 HLAE 命令缺失，停止使用并保留 `%TEMP%\l4n_hlae_plugin.log`。

@@ -245,7 +245,7 @@ class L4NHlaePlugin final : public IL4NPlugin {
 public:
     unsigned int GetInterfaceVersion() override { return 1; }
     const char* GetName() override { return "l4n_hlae_plugin"; }
-    const char* GetVersion() override { return "v0.1"; }
+    const char* GetVersion() override { return "v0.2"; }
 
     void OnGameLaunch() override {
         if (!L4nHlaeLaunchSwitchPresent()) {
