@@ -91,7 +91,6 @@ __mirv_info
 
 ```powershell
 cmake -S . -B build-release -G "Visual Studio 18 2026" -A Win32 `
-  -DL4N_BUILD_HLAE_PLUGIN=ON `
   -DL4N_BUNDLE_OPENEXR=ON `
   -DL4N_PACKAGE_RELEASE=ON `
   "-DL4N_SHADERBUILDER_FRAMEWORK_VERSION=v4.6.2"
@@ -99,7 +98,7 @@ cmake -S . -B build-release -G "Visual Studio 18 2026" -A Win32 `
 cmake --build build-release --config Release --target l4n_release_package --parallel 1
 ```
 
-`L4N_BUNDLE_OPENEXR=ON` 会将 OpenEXR 静态链接进插件，安装时不需要额外复制 OpenEXR DLL。`--parallel 1` 用于避免 protobuf 外部项目在同一构建目录发生并发访问。
+顶层 CMake 直接构建正式的 `l4n_hlae_plugin`。`L4N_BUNDLE_OPENEXR=ON` 会将 OpenEXR 静态链接进插件，安装时不需要额外复制 OpenEXR DLL。`--parallel 1` 用于避免 protobuf 外部项目在同一构建目录发生并发访问。
 
 如果 CMake 找不到 Visual Studio，在配置命令中加入项目变量：
 
@@ -153,10 +152,8 @@ git -C ..\advancedfx-upstream rev-parse HEAD
 ```text
 advancedfx/                  改造后的 HLAE 源码
 config/                      配置模板
-include/                     L4N ABI 头文件
-src/                         旧适配器实验基线
 cmake/package_release.cmake  Release 安装包生成脚本
-tools/                       构建辅助和 PE 检查脚本
+tools/verify_plugin.ps1      PE/x86/导出和依赖检查脚本
 ```
 
 构建输出、日志、预编译 DLL 和本地配置均已加入 `.gitignore`。

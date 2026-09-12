@@ -179,9 +179,6 @@ if(AFX_TARGET_IS_WIN32)
         add_subdirectory("AfxHookSource")
 
         target_compile_definitions(AfxHookSource PRIVATE AFX_L4N_PLUGIN)
-        if(L4N_CURSOR_DIAGNOSTICS_ONLY)
-            target_compile_definitions(AfxHookSource PRIVATE AFX_L4N_CURSOR_DIAGNOSTICS_ONLY=1)
-        endif()
         set_target_properties(AfxHookSource PROPERTIES
             OUTPUT_NAME "l4n_hlae_plugin"
         )

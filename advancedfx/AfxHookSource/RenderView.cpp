@@ -119,11 +119,8 @@ public:
 
 		input->SetMouseControlTemporaryOverride(rightButtonDown);
 
-		bool appliedSuspension = false;
-#if !defined(AFX_L4N_CURSOR_DIAGNOSTICS_ONLY) || !AFX_L4N_CURSOR_DIAGNOSTICS_ONLY
 		input->SetMouseControlSuspended(state.suspendCandidate);
-		appliedSuspension = state.suspendCandidate && !rightButtonDown;
-#endif
+		const bool appliedSuspension = state.suspendCandidate && !rightButtonDown;
 		if (!m_HasAppliedSuspension ||
 			m_LastAppliedSuspension != appliedSuspension) {
 			L4nPluginLogMouseControlState(appliedSuspension ? 1 : 0);
